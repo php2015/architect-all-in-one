@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "file": "vue.js",
+  "sources": [
+    "../src/index.js"
+  ],
+  "sourcesContent": [
+    "const a = 1\n\nconsole.log(a)\n\nexport default a\n"
+  ],
+  "names": [
+    "a",
+    "console",
+    "log"
+  ],
+  "mappings": ";;;;;;KAAMA,CAAC,GAAG;CAEVC,OAAO,CAACC,GAAR,CAAYF,CAAZ;;;;;;;;"
+}
