@@ -9,18 +9,16 @@
 const Promise = require("./source/1.promsie.js")
 let promise = new Promise((resolve, reject) => {
   console.log("promsie")
-  resolve()
-  // reject()
-  // throw new Error();
+  resolve("成功")
+  // reject("失败")
+  // throw new Error('异常');
 })
 
 promise.then(
   (value) => {
-    console.log("success")
+    console.log("success", value)
   },
   (reason) => {
-    console.log("error")
+    console.log("error", reason)
   }
 )
-
-console.log("ok")

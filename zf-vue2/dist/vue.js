@@ -71,11 +71,23 @@
   }(); // vue2会对对象进行遍历，将每个属性 用defineProperty 重新定义 性能差
 
 
-  function defineReactive(data, key, value) {}
+  function defineReactive(data, key, value) {
+    observe(value); // 对象嵌套对象处理
 
-  function observer(data) {
-    console.log(data); // 响应式部分是针对对象来说的，如果不是对象直接略过
+    Object.defineProperty(data, key, {
+      get: function get() {
+        return value;
+      },
+      set: function set(newV) {
+        observe(newV); // 如果用户赋值一个新的对象 需要将这个对象进行劫持
 
+        value = newV;
+      }
+    });
+  }
+
+  function observe(data) {
+    // 响应式部分是针对对象来说的，如果不是对象直接略过
     if (!isObject(data)) {
       return;
     } // 这里使用了一个类，之所以没有使用构造函数的原因是
@@ -106,10 +118,11 @@
     var data = vm.$options.data; // 这里使用 isFunction 工具函数判断传入的data是不是一个函数
     // 如果是一个函数就执行这个函数，但是执行时候需要绑定vm,我们希望在整个执行的过程中
     // this使用执行vm 也就是当前new出来的实例。
+    // 使用_data 和 data 做一个关联 两者使用同一份地址
 
-    data = isFunction(data) ? data.call(vm) : data; // vue2中会将data中的所有数据 进行数据劫持 Object.defineProperty
+    data = vm._data = isFunction(data) ? data.call(vm) : data; // vue2中会将data中的所有数据 进行数据劫持 Object.defineProperty
 
-    observer(data);
+    observe(data);
   }
 
   function initMixin(Vue) {

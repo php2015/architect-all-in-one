@@ -5,10 +5,41 @@
 // 4、每一个promsie实例都有一个then方法
 // 5、promsie 一旦状态改变不能更改。
 // promise 还是基于回调的。
+const PENDING = "PENDING"
+const FULFILLED = "FULFILLED"
+const REJECTED = "REJECTED"
 class Promise {
   // new 的时候传入执行器
   constructor(executor) {
-
+    this.state = PENDING
+    this.value = undefined
+    this.reason = undefined
+    const resolve = (value) => {
+      if (this.state === PENDING) {
+        this.state = FULFILLED
+        this.value = value
+      }
+    }
+    const reject = (reason) => {
+      if (this.state === PENDING) {
+        this.state = REJECTED
+        this.reason = reason
+      }
+    }
+    try {
+      executor(resolve, reject)
+    } catch (e) {
+      reject(e)
+    }
+  }
+  // 拥有一个then方法
+  then(onFulfilled, onRejected) {
+    if (this.state === FULFILLED) {
+      onFulfilled(this.value)
+    }
+    if (this.state === REJECTED) {
+      onRejected(this.reason)
+    }
   }
 }
 
