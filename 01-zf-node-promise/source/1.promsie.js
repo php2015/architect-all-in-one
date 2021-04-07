@@ -4,23 +4,13 @@
 //    如果调用reject 会走失败态，如果调用异常会走失败态 。
 // 4、每一个promsie实例都有一个then方法
 // 5、promsie 一旦状态改变不能更改。
-
 // promise 还是基于回调的。
-const Promise = require("./source/1.promsie.js")
-let promise = new Promise((resolve, reject) => {
-  console.log("promsie")
-  resolve()
-  // reject()
-  // throw new Error();
-})
+class Promise {
+  // new 的时候传入执行器
+  constructor(executor) {
 
-promise.then(
-  (value) => {
-    console.log("success")
-  },
-  (reason) => {
-    console.log("error")
   }
-)
+}
 
-console.log("ok")
+// 导出这个包
+module.exports = Promise
