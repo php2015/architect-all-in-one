@@ -13,9 +13,19 @@ let promise = new Promise((resolve, reject) => {
   }, 1000)
 })
 
+
 promise.then(
   (value) => {
-    console.log("success", value)
+    console.log("success1", value)
+  },
+  (reason) => {
+    console.log("error", reason)
+  }
+)
+
+promise.then(
+  (value) => {
+    console.log("success2", value)
   },
   (reason) => {
     console.log("error", reason)

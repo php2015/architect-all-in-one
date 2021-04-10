@@ -14,16 +14,20 @@ class Promise {
     this.state = PENDING
     this.value = undefined
     this.reason = undefined
+    this.onResolveCallbacks = []
+    this.onRejecteCallbacks = []
     const resolve = (value) => {
       if (this.state === PENDING) {
         this.state = FULFILLED
         this.value = value
+        this.onResolveCallbacks.forEach(fn=>fn())
       }
     }
     const reject = (reason) => {
       if (this.state === PENDING) {
         this.state = REJECTED
         this.reason = reason
+        this.onRejecteCallbacks.forEach(fn=>fn())
       }
     }
     try {
@@ -34,6 +38,15 @@ class Promise {
   }
   // 拥有一个then方法
   then(onFulfilled, onRejected) {
+    if (this.state === PENDING) {
+      // 异步的情况
+      this.onResolveCallbacks.push(() => {
+        onFulfilled(this.value)
+      })
+      this.onRejecteCallbacks.push(() => {
+        onRejected(this.reason)
+      })
+    }
     if (this.state === FULFILLED) {
       onFulfilled(this.value)
     }
