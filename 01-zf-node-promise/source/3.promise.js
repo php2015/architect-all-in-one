@@ -154,10 +154,11 @@ class Promise {
     })
     return promsie2
   }
-  // catch 方法实现其实思路非常清晰, 本质上就是一个then方法,只是实现的时候不传递，成功回调
+  // catch 方法实现其实思路非常清晰, 本质上就是一个then方法,只是实现的时候不传递成功回调
   catch(errFn) {
     return this.then(null, errFn)
   }
+  // 这个静态方法 就是一个等价的封装
   static resolve(val) {
     return new Promise((resolve, reject) => {
       resolve(val)
@@ -172,6 +173,7 @@ class Promise {
 }
 
 // 在promsie 上面添加一个方法
+// 这个方法是一个延迟对象，能够帮助我们减少一次套用
 Promise.deferred = function () {
   let dfd = {}
   dfd.promise = new Promise((resolve, reject) => {
