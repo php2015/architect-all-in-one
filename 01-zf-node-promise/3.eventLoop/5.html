@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+    Promise.resolve().then(() => {
+      console.log('Promise1')
+      setTimeout(() => {
+        console.log('setTimeout2')
+      }, 0);
+    })
+    setTimeout(() => {
+      console.log('setTimeout1');
+      Promise.resolve().then(() => {
+        console.log('Promise2')
+      })
+    }, 0);
+    // 主栈代码执行完毕就会生成两个队列 一个宏任务队列 一个微任务队列
+    // 先清空微任务队列，[promise1] 被拿出来执行了 微任务队列就空了 发现在微任务中又开了一个定时器 setTimeout2 继续放入 宏任务
+    // 此时  [setTimeout1, setTimeout2] 宏任务队列 里面有两个任务，开始执行宏任务 setTimeout1执行的时候
+    // 有生成一个微任务  Promise2 先清空这个微任务 最后再执行  setTimeout2
+    // 所以打印的顺序是 Promise1  setTimeout1 Promise2 setTimeout2
+  </script>
+</body>
+
+</html>
