@@ -9,7 +9,7 @@
 </head>
 
 <body>
-  <div id="button"></div>
+  <button id="button">button</button>
   <script>
     button.addEventListener('click', () => {
       console.log('listener1');
@@ -19,9 +19,8 @@
       console.log('listener2');
       Promise.resolve().then(() => console.log('micro task2'))
     })
-    // 这种执行并不是用户点击的，在代码运行阶段就已经能够运行
-    // 相当于顺序执行，先执行宏任务，再执行微任务 listener1 listener2  micro task1  micro task2
-    button.click(); // click1() click2()
+    // 这样执行，就是两轮宏任务 先执行宏任务，然后清空微任务 listener1 micro task1
+    // 然后再执行下一轮的宏任务 listener2  微任务 micro task2
   </script>
 </body>
 
