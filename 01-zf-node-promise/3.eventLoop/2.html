@@ -9,18 +9,18 @@
 </head>
 
 <body>
-  <div id="button"></div>
   <script>
-    button.addEventListener('click', () => {
-      console.log('listener1');
-      Promise.resolve().then(() => console.log('micro task1'))
-    })
-    button.addEventListener('click', () => {
-      console.log('listener2');
-      Promise.resolve().then(() => console.log('micro task2'))
-    })
-    // 这种执行并不是用户点击的，
-    button.click(); // click1() click2()
+    // 这种情况下，先执行UI渲染,然后从 异步队列中
+    // 取出一个宏任务执行，所以是先变红再变黄。
+    document.body.style.background = 'red';
+    console.log(1)
+
+    setTimeout(() => {
+      console.log(2)
+      document.body.style.background = 'yellow';
+    }, 3);
+
+    console.log(3);
   </script>
 </body>
 

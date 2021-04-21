@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="button"></div>
+  <script>
+    button.addEventListener('click', () => {
+      console.log('listener1');
+      Promise.resolve().then(() => console.log('micro task1'))
+    })
+    button.addEventListener('click', () => {
+      console.log('listener2');
+      Promise.resolve().then(() => console.log('micro task2'))
+    })
+    // 这种执行并不是用户点击的，在代码运行阶段就已经能够运行
+    button.click(); // click1() click2()
+  </script>
+</body>
+
+</html>
