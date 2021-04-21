@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+    // 打印的顺序是 1 2 显示的效果是一直是黄色 
+    // UI渲染是在 微任务之后 虽然主栈代码 第一行就设置了颜色但是不会渲染
+    // 在微任务执行完毕之后 颜色被修改成了黄色这个时候再执行渲染就只是黄色了
+    // document.body.style.background = "red"
+    // console.log(1)
+    // Promise.resolve().then(() => {
+    //   console.log(2)
+    //   document.body.style.background = 'yellow'
+    // })
+    // console.log(3)
+
+
+    // 这种情况下，先执行UI渲染,然后从 异步队列中
+    // 取出一个任务执行，所以是先变红再变黄。
+    document.body.style.background = 'red';
+    console.log(1)
+    
+    setTimeout(() => {
+      console.log(2)
+      document.body.style.background = 'yellow';
+    }, 3);
+
+    console.log(3);
+  </script>
+</body>
+
+</html>
