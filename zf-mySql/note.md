@@ -17,5 +17,67 @@
 - 1、操作数据库 CRUD
   * c create  创建
   * r retrieve 查询
+    * 查询所有数据库的名称
+      * show databases;
+    * 查询某一个数据库的字符集：
+      * show create database 数据库名称
   * u update 修改
   * d delete 删除
+
+## DDL: 操作表
+- C (create)
+1、创建表
+create table 表名(
+  列名: 数据类型1,
+  列名: 数据类型2,
+  ...
+  列名: 数据类型n
+);
+2、复制一张表
+create table 表名1 like 表名2
+- R: 
+1、查询数据库中所有的表名称
+show tables 
+2、查询表结构
+desc 表名
+- D（删除操作）:
+drop table 表名
+
+- U(更新操作):
+  * 1、修改表名
+  ```sql
+  alter table 表名 rename to 新的表名
+  ```
+  * 2、修改表的字符集
+  ```sql
+  alter table 表名 character set 字符集
+  ```
+  * 3、添加一列
+  alter table 表名 add 列名 数据类型
+  * 4、修改列名称 类型
+  alter table 表名 change 列名 新列名  新的数据类型
+  * 5、删除列
+  alter table 表名 drop 列名
+## 数据库类型
+```
+1、int 整数类型
+2、double 小数类型
+3、date 日期 只包含年月日 yyyy-MM-dd
+4、datetime: 日期，包含年月日时分秒 yyyy-MM-dd HH:mm:ss
+5、timestamp: 时间戳类型 如果不给赋值 自动使用系统时间
+6、varchar：字符串类型 name varchar(20)
+```
+
+## DML: 增删改表中的数据
+1、添加数据
+  insert into 表名(列名，列名2，。。。列名n) values (值1，值2，值n)
+注意: 
+1、列名和值要一一对应
+2、如果表名后面 不定义列名，则默认给所有的列添加值
+
+
+
+
+## DQL：查询语句
+select * from stu
+
