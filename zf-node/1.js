@@ -30,5 +30,5 @@ console.log(__filename) // /Users/louis/Documents/myProject/zhufeng-architect/zf
 // process  /Users/louis/Documents/myProject/zhufeng-architect
 console.log(process.cwd());
 
-// env 默认是undefined 
+// env 默认是 undefined 
 console.log(process.env.NODE_ENV)
