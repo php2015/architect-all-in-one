@@ -81,3 +81,26 @@ esModule 规范 (每次引用一个模块，发请求)是静态的 靠webpack编
 2、第三方模块
 3、文件模块
 
+## commonjs 实现原理
+1、将模块读取过来
+2、给这个模块内容外面包装一个函数
+3、最终被返回出去了
+
+## node 中代码调试
+1、vscode 调试
+
+## 代码调试的流程
+1、require 方法 -> Module.prototype.require方法
+2、Module._load 使用这个方法加载模块
+3、Module._resolveFilename 方法就是把路径变成了绝对路径 添加后缀名称 .js .json
+4、new Module 创建模块
+5、module.load 对模块进行加载
+6、根据文件后缀 Module._extension[.js] 去做策略加载
+7、用的是同步读取文件
+8、增加一个函数的壳子 并且让函数执行 让module.export 作为了 this
+9、用户会默认拿到module.exports的返回结果
+
+
+
+
+
