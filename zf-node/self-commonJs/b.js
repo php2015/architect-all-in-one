@@ -12,7 +12,14 @@ function Module(id) {
 Module._extentions = {
   ".js"(module) {
     let script = fs.readFileSync(module.id, "utf8")
-    
+    let templateFn = `(function(exports,module,require,__dirname,__filename){${script}})`
+
+    let fn = vm.runInThisContext(templateFn)
+    let exports = module.exports
+    let thisValue = exports // this === module.exports === exports
+    let filename = module.id
+    let dirname = path.dirname(filename)
+    fn.call(thisValue, exports, module, req, dirname, filename) // 这句代码写出来 调用了 a 模块
   },
   ".json"(module) {
     // 参数就是一个module
@@ -69,5 +76,5 @@ function req(filename) {
   return module.exports // 默认是空对象
 }
 
-const a = req("./a.json")
+const a = req("./a.js")
 console.log(a)
