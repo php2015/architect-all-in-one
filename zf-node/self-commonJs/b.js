@@ -8,6 +8,11 @@ function Module(id) {
   this.exports = {}
 }
 
+/**
+ * 用于缓存模块
+ */
+Module.__catch = {}
+
 // 在添加后缀名的方法中 使用了策略模式
 Module._extentions = {
   ".js"(module) {
@@ -65,9 +70,17 @@ Module.prototype.load = function () {
 function req(filename) {
   // 调用_resolveFilename方法生成绝对路径，并且加上文件后缀名称
   filename = Module._resolveFilename(filename)
-  // console.log(filename)
+
+  let catchModule = Module._catch[filename]
+  if (catchModule) {
+    return catchModule.exports // 直接将上次缓存的模块返回出来
+  }
+
   // new 出来的这就是个对象
   const module = new Module(filename)
+
+  // 文件名是唯一的，将这个文件名缓存起来 根据的是文件名来缓存
+  Module.__catch[filename] = module
 
   // 调用module.load 调用这个load的方法目的就是给module.exports赋值
   module.load()
