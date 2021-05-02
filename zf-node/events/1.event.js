@@ -7,7 +7,7 @@
  * Girl.prototype = Object.create(EventEmitter.prototype)
  */
 
-const EventEmitter = require('./events')
+const EventEmitter = require("./events")
 const util = require("util")
 
 function Girl() {}
@@ -16,18 +16,29 @@ function Girl() {}
 util.inherits(Girl, EventEmitter)
 
 // 创建实例
-let girl = new Girl();
+let girl = new Girl()
+
+const cry = () => {
+  console.log("哭")
+}
 
 // 先将事件订阅号
-girl.on('女生失恋',()=> {
-  console.log('哭');
+girl.on("女生失恋", cry)
+
+girl.on("女生失恋", () => {
+  console.log("吃")
 })
 
-girl.on('女生失恋',()=> {
-  console.log('吃');
+// 还有一个once方法。执行一次就不要再执行了
+// 也不需要解绑
+girl.once('女生失恋',()=>{
+  console.log("逛街");
 })
 
-// 过了一段时间发布
+// 先开始订阅 过了一段时间发布
 setTimeout(() => {
-  girl.emit('女生失恋')
-}, 1000);
+  girl.emit("女生失恋")
+  // 执行off的时候，将绑定的回调解绑
+  girl.off("女生失恋",cry)
+  girl.emit("女生失恋")
+}, 1000)
