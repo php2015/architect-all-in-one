@@ -50,6 +50,64 @@ module.exports = {
 ```
 
 ## 你能简单介绍下webpack配置中的mode是什么吗？
+- 日常开发中，我们一般都只有两套构建环境
+- 一套是开发时候使用，用于本地调试，不进行代码压缩，会打印debug信息，包含sourcemap文件
+- 一套构建后的结果是直接用于线上的，代码是压缩后的，运行时候不打印debug信息，静态文件不包括sourcemap
+- webpack4.x 版本引入了mode的概念
+- 当你指定使用 production mode 时，默认会启用各种性能优化的功能，包括构建结果优化以及 webpack 运行性能优化
+- 而如果是 development mode 的话，则会开启 debug 工具，运行时打印详细的错误信息，以及更加快速的增量编译构建
+
+development: 会将 process.env.NODE_ENV 的值设为 development. 启用 NamedChunksPlugin 和 NamedModulesPlugin
+production: 会将 process.env.NODE_ENV 的值设为 production。启用 FlagDependencyUsagePlugin, FlagIncludedChunksPlugin, ModuleConcatenationPlugin, NoEmitOnErrorsPlugin, OccurrenceOrderPlugin, SideEffectsFlagPlugin 和 UglifyJsPlugin。
+
+
+## 你使用过webpack-dev-server 这个插件吗？
+安装:
+```
+npm install webpack-dev-server --save-dev
+```
+为了提高系统，使用了内存文件系统
+
+```js
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  mode: 'development',
+  devtool:false,
+  entry: './src/index.js',
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'main.js'
+  },
+  module: {
+    rules: [
+      { 
+        test: /\.txt$/, 
+        use: 'raw-loader' 
+      }
+    ]
+  },
+  devServe: {
+    contentBase: resolve(__dirname, 'dist'),
+    writeToDist: true, // 如果指定
+    compress: true, // 是否启动压缩
+    port: 8080, // 指定HTTP 服务器的端口号
+    open: true // 自动打开浏览器
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/index.html'
+    })
+  ]
+};
+```
+
+## 在webpack的配置文件中输出目录 output 中的 path 和 publicPath有什么区别
+path: 指定输出到硬盘上的目录。
+publicPath: 表示的是打包生成的index.html文件里面引用的资源的前缀。
+
+
 
 
 
