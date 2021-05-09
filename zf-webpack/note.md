@@ -88,7 +88,7 @@ module.exports = {
       }
     ]
   },
-  devServe: {
+  devServer: {
     contentBase: resolve(__dirname, 'dist'),
     writeToDist: true, // 如果指定
     compress: true, // 是否启动压缩
@@ -106,6 +106,12 @@ module.exports = {
 ## 在webpack的配置文件中输出目录 output 中的 path 和 publicPath有什么区别
 path: 指定输出到硬盘上的目录。
 publicPath: 表示的是打包生成的index.html文件里面引用的资源的前缀。
+
+
+## 我在配置webpack时候犯的错误：
+- 1 在配置webpack 开发服务器的时候，需要安装 webpack-dev-server 这个插件 我忘记安装了
+- 2 想要使用这个服务，必须配置一个key 这个key 就是 devServer 但是我却写成了 devServe 
+- 3 新版的webpack 在配置使用 webpack-dev-server 的时候 package,json 中的配置是 webpack serve 这点尤其注意
 
 
 
