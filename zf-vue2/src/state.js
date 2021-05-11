@@ -1,7 +1,14 @@
 import { observe } from "./observer/index.js"
 import { isFunction } from "./utils"
 
+/**
+ * 初始化数据处理函数 接收的参数是vm实例了
+ * 因为很多组件的实例都是需要进行初始数据的
+ * @param {*} vm
+ */
 export function initState(vm) {
+  // 还记得在 init.js 中将用户传递的 options 赋值给 vm.$options
+  // 这里可以直接取出来使用了
   const opts = vm.$options
   if (opts.props) {
     initProps(vm)
@@ -20,17 +27,24 @@ export function initState(vm) {
     initWatch(vm)
   }
 }
-function initProps() {}
-function initMethod() {}
+/**
+ * 这个函数专门用来处理用户传递进来的data
+ * 我们写过vue的都知道，这个data中一般存放的都是页面
+ * 中用于显示的响应式数据 比方说一些 tableList 还是一些展示标志位
+ * @param {*} vm
+ */
 function initData(vm) {
   let data = vm.$options.data
   // 这里使用 isFunction 工具函数判断传入的data是不是一个函数
-  // 如果是一个函数就执行这个函数，但是执行时候需要绑定vm,我们希望在整个执行的过程中
-  // this使用执行vm 也就是当前new出来的实例。
-  // 使用_data 和 data 做一个关联 两者使用同一份地址
+  // 如果是一个函数就执行这个函数，但是执行时候需要绑定vm,因为我们希望在整个执行的过程中
+  // this始终指向vm，也就是当前new出来的实例。
+  // 使用_data 和 data 做一个关联 两者使用同一份引用地址
   data = vm._data = isFunction(data) ? data.call(vm) : data
+  
   // vue2中会将data中的所有数据 进行数据劫持 Object.defineProperty
   observe(data)
 }
+function initProps() {}
+function initMethod() {}
 function initComputed() {}
 function initWatch() {}
