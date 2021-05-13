@@ -1,5 +1,5 @@
 import { observe } from "./observer/index.js"
-import { isFunction } from "./utils"
+import { isFunction, proxy } from "./utils"
 
 /**
  * 初始化数据处理函数 接收的参数是vm实例了
@@ -39,8 +39,12 @@ function initData(vm) {
   // 如果是一个函数就执行这个函数，但是执行时候需要绑定vm,因为我们希望在整个执行的过程中
   // this始终指向vm，也就是当前new出来的实例。
   // 使用_data 和 data 做一个关联 两者使用同一份引用地址
-  data = vm._data = isFunction(data) ? data.call(vm) : data
-  
+  vm._data = data = typeof data === "function" ? data.call(vm) : data
+
+  for (let key in data) {
+    proxy(vm, "_data", key)
+  }
+
   // vue2中会将data中的所有数据 进行数据劫持 Object.defineProperty
   observe(data)
 }

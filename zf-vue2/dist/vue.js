@@ -42,25 +42,90 @@
     return Constructor;
   }
 
-  function isFunction(val) {
-    return typeof val === "function";
+  function proxy(vm, data, key) {
+    Object.defineProperty(vm, key, {
+      get: function get() {
+        return vm[data][key]; // vm._data.a
+      },
+      set: function set(newVal) {
+        // 触发set的时候，会得到这个值
+        vm[data][key] = newVal; // vm._data.a = 100;
+      }
+    });
   }
   function isObject(val) {
     return _typeof(val) === "object" && val !== null;
   }
 
+  var oldArrayPrototype = Array.prototype;
+  /**
+   * 每一个构造函数都拥有一个prototype属性
+   * 每一个对象被创建的时候都拥有原型对象
+   * 每一个对象通过__proto__属性访问到自己的原型对象
+   */
+
+  var arrayMethods = Object.create(oldArrayPrototype); // arrayMethods.__proto__ = Array.prototype
+  // 下面的这7个方法要记住呀，非常的重要呀
+
+  var methods = ["push", "shift", "unshift", "pop", "reverse", "sort", "splice"]; // 下面这个写法非常重要，要注意了
+
+  methods.forEach(function (method) {
+    // arrayMethods 是一个对象 对象的每一个方法都是一个函数
+    // 用户只要使用这7个方法，就会走到自己写的方法中。从而做到了数组劫持
+    // 你看：虽然看似是数组劫持，其实是考察原型链的继承
+    arrayMethods[method] = function () {
+      var _oldArrayPrototype$me;
+
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      // 用户传递进来的参数列表 arr.push(1,2,3) ...args = [1,2,3]
+      // 这里我之前一直不是很理解 其实这里 ...args 就是一个整体
+      // 这里的this指向的是谁？ 谁调用就是谁 我们最终会使用 vm.arr.push() pop() 那this就是 数组
+      // 这里数组没有监控索引的变化
+      (_oldArrayPrototype$me = oldArrayPrototype[method]).call.apply(_oldArrayPrototype$me, [this].concat(args));
+
+      var inserted; // 这部分有些绕，绕的地方主要是两个this指的是啥
+      // 这里的this 对应的是当前的数组 __ob__ 属性对应的是Observe实例
+
+      var ob = this.__ob__; // 这是一个自定义的属性 
+      // 对于数组的新增方法 需要做处理
+
+      switch (method) {
+        case 'push': // arr.push({a:1},{b:2})
+
+        case 'unshift':
+          // 这两个方法 都是追加，追加的内容可能是对象类型 应该被再次进行劫持
+          inserted = args; // 将args 赋值给这个需要插入的变量
+
+          break;
+
+        case 'splice':
+          // vue.$set的原理
+          inserted = args.slice(2);
+      }
+
+      if (inserted) {
+        // 为了拿到observe 实例上面的 observeArray 方法 
+        // 先提前将 这个实例绑定到了数组上面
+        inserted = ob.observeArray(inserted); // 给数组新增的值也要进行观测
+      }
+    };
+  });
+
   /**
    * vue2会对对象进行遍历，将每个属性 用defineProperty 重新定义 性能差
-   * defineReactive 是一个包装 内部就是使用 
-   * @param {*} data 
-   * @param {*} key 
-   * @param {*} value 
+   * defineReactive 是一个包装 内部就是使用
+   * @param {*} data
+   * @param {*} key
+   * @param {*} value
    */
 
   function defineReactive(data, key, value) {
     /**
      * 你看这很显然就是一个递归的操作，发现对象里面嵌套对象
-     * 还是可以进一步的做响应式的处理 
+     * 还是可以进一步的做响应式的处理
      */
     observe(value);
     Object.defineProperty(data, key, {
@@ -86,18 +151,56 @@
     function Observer(data) {
       _classCallCheck(this, Observer);
 
-      this.work(data);
+      // 这里使用defineProperty 定义一个 __ob__ 属性
+      // object.defineProperty 方法会直接在一个对象上定义一个新属性。
+      // 或者修改一个对象的现有属性，并返回此对象。判断一个对象是否被观测过，看它有没有 __ob__ 属性
+      // 注意 使用这个方法定义的属性是不会被枚举的到，不可枚举的好处是不会造成死循环，这里写的真的很好
+      Object.defineProperty(data, "__ob__", {
+        enumerable: false,
+        configurable: false,
+        value: this
+      });
+
+      if (Array.isArray(data)) {
+        // 数组的处理 对数组原来的方法进行改写，这种思路就是面向切面编程
+        // 虽然在最后还是会调用数组原来的方法，但是会在外面包一层函数,
+        // 可以在包装的这层函数中加入自己的一些逻辑——高阶函数
+        // 在学习这部分的内容时候对于原型的理解终究是有些模糊，推荐一篇文章
+        // https://github.com/mqyqingfeng/Blog/issues/2
+        // 文章中有一句话说的特别清晰：每一个JavaScript对象 (null) 除外都拥有__proto__属性 指向它的原型对象
+        data.__proto__ = arrayMethods; // 这里还需要处理一种情况，如果数组中的元素还是数组，或者数组中的元素是对象，
+        // 我们原则上是需要支持观测内部对象变化的，虽然vue中对于数组没有监控索引的变化
+        // 但是针对数组中元素是对象的情况还是做了处理
+
+        this.observeArray(data);
+      } else {
+        // 对象的处理
+        this.work(data);
+      }
     }
     /**
-     * data 是一个对象 遍历对象使用object.keys 
-     * 这个方法已经很常见了。返回的是一个数组 数组的所有元素
-     * 由这个对象的key组成 
-     * 划重点是所有的属性做响应式，哈哈哈，这部分一直迷糊
-     * @param {*} data 
+     * 观测对象
+     * @param {*} data
      */
 
 
     _createClass(Observer, [{
+      key: "observeArray",
+      value: function observeArray(data) {
+        // 对数组的每一项进行观测。
+        data.forEach(function (item) {
+          observe(item);
+        });
+      }
+      /**
+       * data 是一个对象 遍历对象使用object.keys
+       * 这个方法已经很常见了。返回的是一个数组 数组的所有元素
+       * 由这个对象的key组成
+       * 划重点是所有的属性做响应式，哈哈哈，这部分一直迷糊
+       * @param {*} data
+       */
+
+    }, {
       key: "work",
       value: function work(data) {
         // console.log(Object.keys(data))  ["name", "showFlag"]
@@ -124,6 +227,13 @@
     // 响应式部分是针对对象来说的，如果不是对象直接略过
     if (!isObject(data)) {
       return;
+    } // 这里做一个判断，如果当前的这个数据已经被响应式了
+    // 直接返回就好，不需要重复响应式，最初添加这个属性是在Observer 这个类中做的
+    // 所以被观测的属性，都具有 __ob__ 属性
+
+
+    if (data.__ob__) {
+      return data;
     } // 这里使用了一个类，之所以没有使用构造函数的原因是
     // 功能比较耦合,返回的是一个实例
 
@@ -168,7 +278,12 @@
     // this始终指向vm，也就是当前new出来的实例。
     // 使用_data 和 data 做一个关联 两者使用同一份引用地址
 
-    data = vm._data = isFunction(data) ? data.call(vm) : data; // vue2中会将data中的所有数据 进行数据劫持 Object.defineProperty
+    vm._data = data = typeof data === "function" ? data.call(vm) : data;
+
+    for (var key in data) {
+      proxy(vm, "_data", key);
+    } // vue2中会将data中的所有数据 进行数据劫持 Object.defineProperty
+
 
     observe(data);
   }
