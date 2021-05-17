@@ -1,5 +1,3 @@
-## 什么是jsx 
+## 学习笔记资料的地址
+http://www.zhufengpeixun.com/grow/html/106.1.react.html
 
-## 17之后把react给冻结了 不能添加新的属性
-
-## 对象的冻结

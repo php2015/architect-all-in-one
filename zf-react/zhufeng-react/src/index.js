@@ -1,4 +1,11 @@
 import React from "react"
 import ReactDOM from "react-dom"
 
-ReactDOM.render(<h1>hello</h1>, document.getElementById("root"))
+let element = (
+  <div className="title" style={{ color: "red" }}>
+    <span>hello</span>world
+  </div>
+)
+
+console.log(JSON.stringify(element,null,2));
+ReactDOM.render(element, document.getElementById("root"))

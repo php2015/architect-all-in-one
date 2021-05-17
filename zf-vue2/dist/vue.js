@@ -4,8 +4,17 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 }(this, (function () { 'use strict';
 
+  function parserHTML(html) {
+    // 具体的思路是我每解析了一个标签就把它删掉 这里使用while循环 直到为空 说明解析完成了
+    while (html) {
+      // 以这种尖角号开头的有可能是 开始标签 也有可能是结束标签 <div id="app">123123</div>
+      html.indexOf('<'); // < 出现在开头, 
+    }
+  }
+
   function complileToFunction(template) {
-    console.log(template);
+    // console.log(template)
+    parserHTML(template);
   }
 
   function _typeof(obj) {
