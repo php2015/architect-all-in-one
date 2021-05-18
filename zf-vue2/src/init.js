@@ -1,4 +1,5 @@
-import { complileToFunction } from "./compliler/index.js"
+import { complileToFunction } from "./compiler/index.js"
+import { mountComponent } from "./lifecycle.js"
 import { initState } from "./state"
 
 /**
@@ -55,5 +56,8 @@ export function initMixin(Vue) {
         options.render = render
       }
     }
+    // 调用render方法 渲染成真实的dom替换掉页面的内容
+    // 这个方法是定义在生命周期这个包中的
+    mountComponent(vm, el)
   }
 }
