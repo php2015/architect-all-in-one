@@ -454,13 +454,17 @@
     return render;
   }
 
+  function lifecycleMixin(Vue) {
+    Vue.prototype._update = function (vnode) {
+      console.log("update");
+    };
+  }
   function mountComponent(vm, el) {
-    // console.log(vm);
-    // console.log(el);
     // 更新函数 数据变化后，会再次调用这个函数
     var updateComponent = function updateComponent() {
       // 在这个函数的内部核心只做了两件事情 1、调用render方法生成虚拟dom 2、使用render方法 渲染真实的dom
       // 后续更新可以调用 updateComponent 这个方法
+      // 这两个方法实例上都是具备的，说明是挂载在vue原型上面的
       vm._update(vm._render());
     }; // 第一次渲染的时候先调用一次
 
@@ -779,6 +783,16 @@
     };
   }
 
+  function renderMixin(Vue) {
+    Vue.prototype._render = function () {
+      var vm = this;
+      var render = vm.$options.render; // 这个render 就是我们解析出来的render方法 同时也有可能是用户自己写的render
+
+      var vnode = render.call(vm);
+      return vnode;
+    };
+  }
+
   /**
    * 接收一个option作为参数 是一个对象
    * 这个options就是用户传递进来的配置选项
@@ -793,9 +807,14 @@
     this._init(options); // 初始化操作
 
   } // 只要加载了index.js 这个文件下面的函数都会执行
+  // 并且是首先执行的，那么所有在mixin上挂载的所有原型
+  // 方法都会预先定义执行，init 是在new 的时候执行的
 
 
-  initMixin(Vue); // 将vue导出
+  initMixin(Vue);
+  renderMixin(Vue); // 存放的是 _render
+
+  lifecycleMixin(Vue); // 存放的是 _update
 
   return Vue;
 

@@ -1,4 +1,6 @@
 import { initMixin } from "./init"
+import { lifecycleMixin } from "./lifecycle";
+import { renderMixin } from "./render";
 
 /**
  * 接收一个option作为参数 是一个对象
@@ -14,7 +16,11 @@ function Vue(options) {
 }
 
 // 只要加载了index.js 这个文件下面的函数都会执行
-initMixin(Vue)
+// 并且是首先执行的，那么所有在mixin上挂载的所有原型
+// 方法都会预先定义执行，init 是在new 的时候执行的
+initMixin(Vue);
+renderMixin(Vue);  // 存放的是 _render
+lifecycleMixin(Vue); // 存放的是 _update
 
 // 将vue导出
 export default Vue
