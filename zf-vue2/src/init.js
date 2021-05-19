@@ -40,6 +40,7 @@ export function initMixin(Vue) {
     const vm = this
     const options = vm.$options
     el = document.querySelector(el)
+    vm.$el = el
     // 这里解释下为什么要做这个判断，因为会有情况是用户手动写render方法
     // 这种情况下用户手写的render优先级要更高一些。这个函数的终极目标是帮助我们
     // 创建出虚拟节点

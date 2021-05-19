@@ -1,6 +1,10 @@
+import { patch } from "./vdom/patch";
+
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
-    console.log("update")
+    // 这个方法既在初始化的时候调用，也会在更新的情况下调用
+    const vm = this;
+    vm.$el = patch(vm.$el, vnode)
   }
 }
 

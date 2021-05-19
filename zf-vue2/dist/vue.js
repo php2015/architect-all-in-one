@@ -454,9 +454,51 @@
     return render;
   }
 
+  function createEle(vnode) {
+    var tag = vnode.tag,
+        children = vnode.children;
+        vnode.key;
+        vnode.data;
+        var text = vnode.text;
+        vnode.vm;
+
+    if (typeof tag === "string") {
+      // 创建元素放在vnode.el 上
+      vnode.el = document.createElement(tag);
+      children.forEach(function (child) {
+        // 遍历儿子，将儿子的渲染结果放进父亲中
+        vnode.el.appendChild(createEle(child));
+      });
+    } else {
+      // 创建文本
+      vnode.el = document.createTextNode(text);
+    }
+
+    return vnode.el;
+  }
+
+  function patch(oldVnode, vnode) {
+    if (oldVnode.nodeType == 1) {
+      // 说明是真实的元素
+      // console.log('真实元素');
+      // 用vnode来生成真实的dom，替换虚拟dom
+      // 1、首先找到当前dom元素的父元素
+      var parentElment = oldVnode.parentNode; // console.log(parentElment)
+      // 2、根据虚拟节点创建元素
+
+      var ele = createEle(vnode); // 3、将当前根据虚拟节点创建的元素插入到老元素的后面
+
+      parentElment.insertBefore(ele, oldVnode.nextSibling); // 4、删除老的节点 打完收工
+
+      parentElment.removeChild(oldVnode);
+    }
+  }
+
   function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
-      console.log("update");
+      // 这个方法既在初始化的时候调用，也会在更新的情况下调用
+      var vm = this;
+      vm.$el = patch(vm.$el, vnode);
     };
   }
   function mountComponent(vm, el) {
@@ -758,7 +800,8 @@
     Vue.prototype.$mount = function (el) {
       var vm = this;
       var options = vm.$options;
-      el = document.querySelector(el); // 这里解释下为什么要做这个判断，因为会有情况是用户手动写render方法
+      el = document.querySelector(el);
+      vm.$el = el; // 这里解释下为什么要做这个判断，因为会有情况是用户手动写render方法
       // 这种情况下用户手写的render优先级要更高一些。这个函数的终极目标是帮助我们
       // 创建出虚拟节点
       // 这部分信息量比较大，我们可以在options的选项中添加 template 字段
@@ -783,7 +826,50 @@
     };
   }
 
+  // 专门有一个包来处理虚拟节点
+  function createElement(vm, tag) {
+    var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    for (var _len = arguments.length, children = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
+      children[_key - 3] = arguments[_key];
+    }
+
+    return vnode(vm, tag, data, data.key, children, undefined);
+  }
+  function createTextElement(vm, text) {
+    return vnode(vm, undefined, undefined, undefined, undefined, text);
+  }
+
+  function vnode(vm, tag, data, key, children, text) {
+    return {
+      vm: vm,
+      tag: tag,
+      data: data,
+      key: key,
+      children: children,
+      text: text
+    };
+  }
+
   function renderMixin(Vue) {
+    Vue.prototype._c = function () {
+      // createElement
+      return createElement.apply(void 0, [this].concat(Array.prototype.slice.call(arguments)));
+    };
+
+    Vue.prototype._v = function (text) {
+      // createTextElement
+      return createTextElement(this, text);
+    };
+
+    Vue.prototype._s = function (val) {
+      if (_typeof(val) === "object") {
+        return JSON.stringify(val);
+      }
+
+      return val;
+    };
+
     Vue.prototype._render = function () {
       var vm = this;
       var render = vm.$options.render; // 这个render 就是我们解析出来的render方法 同时也有可能是用户自己写的render
