@@ -44,7 +44,6 @@ function initData(vm) {
   for (let key in data) {
     proxy(vm, "_data", key)
   }
-
   // vue2中会将data中的所有数据 进行数据劫持 Object.defineProperty
   observe(data)
 }

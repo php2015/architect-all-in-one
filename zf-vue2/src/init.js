@@ -12,16 +12,15 @@ import { initState } from "./state"
 export function initMixin(Vue) {
   // 扩展原型上的方法
   Vue.prototype._init = function (options) {
-    // 原型方法中的this指向实例 所有的实例 都具有这些方法
+    // 原型方法中的this指向实例 所有的实例都具有这些方法，
     // 这里用vm表示this的引用比较方便识别。假设在这个函数中
     // 直接有一个函数声明，函数声明中的this就不好说是谁了。
     // 但是可以在函数中使用vm,这个就特别类似于 var that = this 那种写法
     const vm = this
-    // 用户传递进来的选项挂载到上面,我们能够操作 vm.$options
+    // 用户传递进来的options属性挂载到vm上面, 这时我们能够操作vm.$options
     vm.$options = options
-    // 初始化状态 为什么要有这个 函数 不仅仅是 有watch
-    // 还有computed props data 我们需要有一个统一的函数
-    // 来处理这些参数。
+    // 初始化状态 模板渲染的数据需要这个函数  不仅仅是有watch 还有computed props data 我们需要有一个统一的函数
+    // 来处理这些参数。用户也是将不同的状态放在不同的对象下面进行维护
     initState(vm)
     // 数据初始化就这样结束了吗？ 当然没有 我们还需要将数据挂载到模板上面
     if (vm.$options.el) {

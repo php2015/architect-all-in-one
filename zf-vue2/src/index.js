@@ -3,7 +3,8 @@ import { lifecycleMixin } from "./lifecycle";
 import { renderMixin } from "./render";
 
 /**
- * 接收一个option作为参数 是一个对象
+ * 这里是一个函数声明，只有在new的时候才会调用
+ * 接收一个 options 作为参数，options 是一个对象
  * 这个options就是用户传递进来的配置选项
  * 这个配置选项中包含 data el watch computed methods。。。
  * 一些列的参数，在使用vue-cli脚手架进行开发的时候
