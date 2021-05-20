@@ -1,4 +1,5 @@
 import { patch } from "./vdom/patch";
+import Watcher from "./observer/watcher";
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
@@ -17,5 +18,15 @@ export function mountComponent(vm, el) {
     vm._update(vm._render())
   }
   // 第一次渲染的时候先调用一次
-  updateComponent()
+  // vue中视图更新是通过观察者模式实现的
+  // 属性是被观察者  观察者的作用是刷新页面
+  // updateComponent()
+  // 第一个参数是vm,当前的实例 第二参数是更新方法 第三个参数是回调函数
+  /**
+   * true 渲染watcher 说明还有其他watcher
+   * 进行渲染的时候会创建一个watcher
+   */
+  new Watcher(vm, updateComponent, ()=>{
+    console.log('我更新了');
+  },true)
 }

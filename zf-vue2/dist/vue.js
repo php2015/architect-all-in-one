@@ -490,9 +490,38 @@
 
       parentElment.insertBefore(ele, oldVnode.nextSibling); // 4、删除老的节点 打完收工
 
-      parentElment.removeChild(oldVnode);
+      parentElment.removeChild(oldVnode); // 将新创建的节点返回出去。
+
+      return ele;
     }
   }
+
+  var id = 0;
+
+  var Watcher = /*#__PURE__*/function () {
+    function Watcher(vm, exprOrFn, cb, options) {
+      _classCallCheck(this, Watcher);
+
+      this.vm = vm;
+      this.exprOrFn = exprOrFn;
+      this.cb = cb;
+      this.options = options;
+      this.id = id++;
+      this.getter = exprOrFn;
+      this.get(); // new Watcher 的时候就会执行这个方法 这个方法实际上就会对于传递进来的函数做了一层包装 
+    } // 默认应该让exprOrFn执行 就是updateComponent这个方法 render 去vm上取值 每次取的都是新的值
+
+
+    _createClass(Watcher, [{
+      key: "get",
+      value: function get() {
+        // 每个属性都能收集自己的watcher
+        this.getter();
+      }
+    }]);
+
+    return Watcher;
+  }();
 
   function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
@@ -509,9 +538,20 @@
       // 这两个方法实例上都是具备的，说明是挂载在vue原型上面的
       vm._update(vm._render());
     }; // 第一次渲染的时候先调用一次
+    // vue中视图更新是通过观察者模式实现的
+    // 属性是被观察者  观察者的作用是刷新页面
+    // updateComponent()
+    // 第一个参数是vm,当前的实例 第二参数是更新方法 第三个参数是回调函数
+
+    /**
+     * true 渲染watcher 说明还有其他watcher
+     * 进行渲染的时候会创建一个watcher
+     */
 
 
-    updateComponent();
+    new Watcher(vm, updateComponent, function () {
+      console.log('我更新了');
+    }, true);
   }
 
   function proxy(vm, data, key) {
@@ -771,15 +811,14 @@
   function initMixin(Vue) {
     // 扩展原型上的方法
     Vue.prototype._init = function (options) {
-      // 原型方法中的this指向实例 所有的实例 都具有这些方法
+      // 原型方法中的this指向实例 所有的实例都具有这些方法，
       // 这里用vm表示this的引用比较方便识别。假设在这个函数中
       // 直接有一个函数声明，函数声明中的this就不好说是谁了。
       // 但是可以在函数中使用vm,这个就特别类似于 var that = this 那种写法
-      var vm = this; // 用户传递进来的选项挂载到上面,我们能够操作 vm.$options
+      var vm = this; // 用户传递进来的options属性挂载到vm上面, 这时我们能够操作vm.$options
 
-      vm.$options = options; // 初始化状态 为什么要有这个 函数 不仅仅是 有watch
-      // 还有computed props data 我们需要有一个统一的函数
-      // 来处理这些参数。
+      vm.$options = options; // 初始化状态 模板渲染的数据需要这个函数  不仅仅是有watch 还有computed props data 我们需要有一个统一的函数
+      // 来处理这些参数。用户也是将不同的状态放在不同的对象下面进行维护
 
       initState(vm); // 数据初始化就这样结束了吗？ 当然没有 我们还需要将数据挂载到模板上面
 
@@ -880,7 +919,8 @@
   }
 
   /**
-   * 接收一个option作为参数 是一个对象
+   * 这里是一个函数声明，只有在new的时候才会调用
+   * 接收一个 options 作为参数，options 是一个对象
    * 这个options就是用户传递进来的配置选项
    * 这个配置选项中包含 data el watch computed methods。。。
    * 一些列的参数，在使用vue-cli脚手架进行开发的时候

@@ -31,5 +31,7 @@ export function patch(oldVnode, vnode) {
 
     // 4、删除老的节点 打完收工
     parentElment.removeChild(oldVnode)
+    // 将新创建的节点返回出去。
+    return ele
   }
 }
