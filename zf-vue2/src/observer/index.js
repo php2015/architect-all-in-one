@@ -15,7 +15,9 @@ function defineReactive(data, key, value) {
    */
   observe(value)
   Object.defineProperty(data, key, {
+    // 取值的时候创建一个dep
     get() {
+      // console.log(key)
       return value
     },
     set(newV) {

@@ -25,6 +25,8 @@ export function mountComponent(vm, el) {
   /**
    * true 渲染watcher 说明还有其他watcher
    * 进行渲染的时候会创建一个watcher
+   * 有了watcher 之后 我们希望属性能和watcher有一个关联
+   * 
    */
   new Watcher(vm, updateComponent, ()=>{
     console.log('我更新了');
