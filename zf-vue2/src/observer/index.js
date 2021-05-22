@@ -1,5 +1,6 @@
 import { isObject } from "../utils"
 import { arrayMethods } from "./array"
+import Dep from "./dep"
 
 /**
  * vue2会对对象进行遍历，将每个属性 用defineProperty 重新定义 性能差
@@ -14,9 +15,15 @@ function defineReactive(data, key, value) {
    * 还是可以进一步的做响应式的处理
    */
   observe(value)
+  let dep = new Dep()
   Object.defineProperty(data, key, {
     // 取值的时候创建一个dep
     get() {
+      // 渲染之前的时候先将watcher放在了dep.target上
+      // 然后将dep.target 置空 这样 在模板下面取值时候就不会依赖收集
+      if (Dep.target) {
+        dep.depend(); // 让dep
+      }
       // console.log(key)
       return value
     },
@@ -24,8 +31,12 @@ function defineReactive(data, key, value) {
       /**
        * 如果用户赋值一个新的对象 需要将这个对象进行劫持
        */
-      observe(newV)
-      value = newV
+      if(newV !== value) {
+        observe(newV)
+        value = newV
+        // 告诉当前的属性存放的watcher更新
+        dep.notify()
+      }
     },
   })
 }

@@ -9,7 +9,32 @@ let id = 0
 class Dep {
   constructor() {
     this.id = id++
+    this.subs = [] // 用来存放watcher的
   }
+  depend() {
+    // 走到这个函数的时候 dep.target 已经存在
+    if (Dep.target) {
+      // Dep.target 就是 watcher 这相当于
+      // watcher 上面有一个方法 addDep 把当前的 dep 存进watcher
+      Dep.target.addDep(this)
+    }
+  }
+  addSub(watcher) {
+    this.subs.push(watcher)
+  }
+  notify() {
+    this.subs.forEach((watcher) => watcher.update())
+  }
+}
+// 静态属性
+Dep.target = null
+
+export function pushTarget(watcher) {
+  Dep.target = watcher
+}
+
+export function popTarget() {
+  Dep.target = null
 }
 
 export default Dep

@@ -496,6 +496,59 @@
     }
   }
 
+  /**
+   * 每个属性我都给它分配一个dep dep可以存放watcher 一个属性对应100个watcher vuex 中一个数据状态
+   * 可以在多个组件中使用 事实上这种场景就是上面所说的。
+   * 同样的watcher中可以存放多个dep
+   *
+   * 假如我有100个组件，我就有100watcher
+   */
+  var id$1 = 0;
+
+  var Dep = /*#__PURE__*/function () {
+    function Dep() {
+      _classCallCheck(this, Dep);
+
+      this.id = id$1++;
+      this.subs = []; // 用来存放watcher的
+    }
+
+    _createClass(Dep, [{
+      key: "depend",
+      value: function depend() {
+        // 走到这个函数的时候 dep.target 已经存在
+        if (Dep.target) {
+          // Dep.target 就是 watcher 这相当于
+          // watcher 上面有一个方法 addDep 把当前的 dep 存进watcher
+          Dep.target.addDep(this);
+        }
+      }
+    }, {
+      key: "addSub",
+      value: function addSub(watcher) {
+        this.subs.push(watcher);
+      }
+    }, {
+      key: "notify",
+      value: function notify() {
+        this.subs.forEach(function (watcher) {
+          return watcher.update();
+        });
+      }
+    }]);
+
+    return Dep;
+  }(); // 静态属性
+
+
+  Dep.target = null;
+  function pushTarget(watcher) {
+    Dep.target = watcher;
+  }
+  function popTarget() {
+    Dep.target = null;
+  }
+
   var id = 0;
 
   var Watcher = /*#__PURE__*/function () {
@@ -508,19 +561,44 @@
       this.options = options;
       this.id = id++;
       this.getter = exprOrFn;
-      this.get(); // new Watcher 的时候就会执行这个方法 这个方法实际上就会对于传递进来的函数做了一层包装 
+      this.deps = []; // 每一个属性对应的是一个dep 这个我其实有点理解不了
+
+      this.depsId = new Set();
+      this.get(); // new Watcher 的时候就会执行这个方法 这个方法实际上就会对于传递进来的函数做了一层包装
     } // 默认应该让exprOrFn执行 就是updateComponent这个方法 render 去vm上取值 每次取的都是新的值
 
 
     _createClass(Watcher, [{
       key: "get",
       value: function get() {
-        // 每个属性都能收集自己的watcher
+        // 在执行取值之前，先把这个watcher放进dep的target属性上
+        pushTarget(this); // 每个属性都能收集自己的watcher
         // 当我们执行 这个get方法的时候 会从defineProperty 执行get方法
         // 每个属性都可以收集自己的watcher
         // 一个组件有100个属性，那这100个属性都是属于这一个watcher的
         // 我希望一个属性可以对应多个watcher  同时一个watcher可以对应多个属性
+
         this.getter(); // 走到这个函数的时候 会从vm上取值，因为data上的属性已经被响应式了 会触发get方法
+
+        popTarget(); // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
+      }
+    }, {
+      key: "update",
+      value: function update() {
+        this.get();
+      }
+    }, {
+      key: "addDep",
+      value: function addDep(dep) {
+        var id = dep.id;
+
+        if (!this.depsId.has(id)) {
+          // id 不存在 就将这个dep id 放进去
+          this.depsId.add(id);
+          this.deps.push(dep); // 同样的 需要在dep中存放watcher
+
+          dep.addSub(this);
+        }
       }
     }]);
 
@@ -646,18 +724,29 @@
      * 还是可以进一步的做响应式的处理
      */
     observe(value);
+    var dep = new Dep();
     Object.defineProperty(data, key, {
       // 取值的时候创建一个dep
       get: function get() {
-        // console.log(key)
+        // 渲染之前的时候先将watcher放在了dep.target上
+        // 然后将dep.target 置空 这样 在模板下面取值时候就不会依赖收集
+        if (Dep.target) {
+          dep.depend(); // 让dep
+        } // console.log(key)
+
+
         return value;
       },
       set: function set(newV) {
         /**
          * 如果用户赋值一个新的对象 需要将这个对象进行劫持
          */
-        observe(newV);
-        value = newV;
+        if (newV !== value) {
+          observe(newV);
+          value = newV; // 告诉当前的属性存放的watcher更新
+
+          dep.notify();
+        }
       }
     });
   }
