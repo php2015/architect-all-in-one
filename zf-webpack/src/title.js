@@ -1,1 +1,1 @@
-module.exports = 'title'
+module.exports = 'webpack'

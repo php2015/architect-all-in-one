@@ -1,7 +1,7 @@
 const path = require("path")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 module.exports = {
-  mode: "development",
+  mode: "development", // 模式 
   entry: {
     main: "./src/index.js",
   },

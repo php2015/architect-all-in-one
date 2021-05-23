@@ -2,16 +2,23 @@
 
 本质上，webpack 是一个用于现代 JavaScript 应用程序的静态模块打包工具。当 webpack 处理应用程序时，它会在内部构建一个 依赖图(dependency graph)，此依赖图对应映射到项目所需的每个模块，并生成一个或多个 bundle
 
+
 ## webpack如何安装的
+
 安装的时候 webpack 是核心模块 webpack-cli 是它的命令行工具，都是放在一起使用的，使用 --save-dev 说明是开发依赖。也可以使用简写 -D。
 ```
 npm install  webpack  webpack-cli --save-dev
 ```
 
 ## webpack的入口（entry）是什么
+webpack 是使用node写出来的，配置文件需要使用的node的语法来运行
+
+
 入口起点(entry point)指示 webpack 应该使用哪个模块，来作为构建其内部 依赖图(dependency graph) 的开始。进入入口起点后，webpack 会找出有哪些模块和库是入口起点（直接和间接）依赖的。默认值是 ./src/index.js，但你可以通过在 webpack configuration 中配置 entry 属性，来指定一个（或多个）不同的入口起点。
 
 ## webpack的输出（output）是什么
+打包出来的文件必须是一个绝对路径, 因此output中的path配置中我们用到了node中的path模块。
+
 output 属性告诉 webpack 在哪里输出它所创建的 bundle，以及如何命名这些文件，主要输出文件的默认值是 ./dist/main.js，其他生成文件默认放置在 ./dist 文件夹中。
 
 ## webpack的loader 是什么
