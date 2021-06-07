@@ -121,6 +121,10 @@ publicPath: 表示的是打包生成的index.html文件里面引用的资源的�
 - 3 新版的webpack 在配置使用 webpack-dev-server 的时候 package,json 中的配置是 webpack serve 这点尤其注意
 
 
+## 关于处理css的一些loader。
+1、css-loader 用来处理@import这种语法的。
+2、style-loader 可以把css 插入到head标签中
+
 
 
 
