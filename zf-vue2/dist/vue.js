@@ -497,11 +497,9 @@
   }
 
   /**
-   * 每个属性我都给它分配一个dep dep可以存放watcher 一个属性对应100个watcher vuex 中一个数据状态
-   * 可以在多个组件中使用 事实上这种场景就是上面所说的。
-   * 同样的watcher中可以存放多个dep
-   *
-   * 假如我有100个组件，我就有100watcher
+   * 每个属性我都给它分配一个 dep dep可以存放watcher
+   * 一个属性如果对应100个watcher (vuex中一个state可能在很多个页面中使用)
+   * 同样的 watcher中可能存在多个属性, 因为每个属性都给他分配了一个dep 所以watcher中可能存在多个dep
    */
   var id$1 = 0;
 
@@ -552,19 +550,28 @@
   var id = 0;
 
   var Watcher = /*#__PURE__*/function () {
+    /**
+     * @param {*} vm 
+     * @param {*} exprOrFn 表达式或者是个函数
+     * @param {*} cb 
+     * @param {*} options 
+     */
     function Watcher(vm, exprOrFn, cb, options) {
       _classCallCheck(this, Watcher);
 
       this.vm = vm;
       this.exprOrFn = exprOrFn;
       this.cb = cb;
-      this.options = options;
+      this.options = options; // 每 new 一次 watcher 这个id 就会累加
+
       this.id = id++;
       this.getter = exprOrFn;
       this.deps = []; // 每一个属性对应的是一个dep 这个我其实有点理解不了
 
-      this.depsId = new Set();
-      this.get(); // new Watcher 的时候就会执行这个方法 这个方法实际上就会对于传递进来的函数做了一层包装
+      this.depsId = new Set(); // new Watcher 的时候就会执行这个get方法 
+      // 而这个get方法执行实际上就是我们传递进来 updateComponent 函数 执行
+
+      this.get();
     } // 默认应该让exprOrFn执行 就是updateComponent这个方法 render 去vm上取值 每次取的都是新的值
 
 
@@ -575,16 +582,19 @@
         pushTarget(this); // 每个属性都能收集自己的watcher
         // 当我们执行 这个get方法的时候 会从defineProperty 执行get方法
         // 每个属性都可以收集自己的watcher
-        // 一个组件有100个属性，那这100个属性都是属于这一个watcher的
-        // 我希望一个属性可以对应多个watcher  同时一个watcher可以对应多个属性
+        // 每个组件都拥有一个渲染watcher 组件有100个属性，那这100个属性都是属于这一个渲染watcher的
+        // 对于vuex的使用场景来说，一个state 会在多个页面中用到，那这一个属性 对应的是多个 watcher
+        // 当这个state变化了，是需要通知多个watcher一起更新的
+        // 走到这个函数的时候 会从vm上取值，因为data上的属性已经被响应式了 会触发get方法
 
-        this.getter(); // 走到这个函数的时候 会从vm上取值，因为data上的属性已经被响应式了 会触发get方法
+        this.getter(); // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
 
-        popTarget(); // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
+        popTarget();
       }
     }, {
       key: "update",
       value: function update() {
+        // vue 中的更新操作是异步的
         this.get();
       }
     }, {
@@ -615,21 +625,24 @@
   function mountComponent(vm, el) {
     // 更新函数 数据变化后，会再次调用这个函数
     var updateComponent = function updateComponent() {
-      // 在这个函数的内部核心只做了两件事情 1、调用render方法生成虚拟dom 2、使用render方法 渲染真实的dom
+      // 在这个函数的内部核心只做了两件事情:
+      //    1、调用render方法生成虚拟dom 
+      //    2、使用render方法渲染真实的dom
       // 后续更新可以调用 updateComponent 这个方法
-      // 这两个方法实例上都是具备的，说明是挂载在vue原型上面的
+      // 这里有一个细节需要注意, 在调用render的时候，会从vm上取值，必然触发 vm 上属性的get操作
       vm._update(vm._render());
     }; // 第一次渲染的时候先调用一次
     // vue中视图更新是通过观察者模式实现的
-    // 属性是被观察者  观察者的作用是刷新页面
-    // updateComponent()
-    // 第一个参数是vm,当前的实例 第二参数是更新方法 第三个参数是回调函数
+    // 属性:  被观察者  观察者:刷新页面
+    // 第一个参数是vm: 当前的实例 
+    // 第二个参数是更新方法，也就是 updateComponent 这个方法
+    // 第三个参数是回调函数,就是更新完毕之后，需要执行的函数
+    // 第四个参数 是一个标识，代表的是渲染watcher 
 
     /**
-     * true 渲染watcher 说明还有其他watcher
+     * true 渲染watcher 说明还有其他 watcher
      * 进行渲染的时候会创建一个watcher
      * 有了watcher 之后 我们希望属性能和watcher有一个关联
-     * 
      */
 
 

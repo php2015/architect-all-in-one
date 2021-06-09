@@ -1,10 +1,9 @@
 /**
- * 每个属性我都给它分配一个dep dep可以存放watcher 一个属性对应100个watcher vuex 中一个数据状态
- * 可以在多个组件中使用 事实上这种场景就是上面所说的。
- * 同样的watcher中可以存放多个dep
- *
- * 假如我有100个组件，我就有100watcher
+ * 每个属性我都给它分配一个 dep dep可以存放watcher
+ * 一个属性如果对应100个watcher (vuex中一个state可能在很多个页面中使用)
+ * 同样的 watcher中可能存在多个属性, 因为每个属性都给他分配了一个dep 所以watcher中可能存在多个dep
  */
+
 let id = 0
 class Dep {
   constructor() {

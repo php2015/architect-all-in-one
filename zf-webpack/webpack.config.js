@@ -11,7 +11,7 @@ module.exports = {
   },
   devServer: {
     compress: true, // 是否启动压缩
-    port: 8080, // 指定HTTP 服务器的端口号
+    port: 8081, // 指定HTTP 服务器的端口号
     open: true, // 自动打开浏览器
   },
   module: {
