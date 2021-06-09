@@ -497,10 +497,11 @@
   }
 
   /**
-   * 每个属性我都给它分配一个 dep dep可以存放watcher
+   * 每个属性我都给它分配一个dep dep可以存放watcher
    * 一个属性如果对应100个watcher (vuex中一个state可能在很多个页面中使用)
    * 同样的 watcher中可能存在多个属性, 因为每个属性都给他分配了一个dep 所以watcher中可能存在多个dep
    */
+  // 为了保证dep的唯一性 也需要用一个id
   var id$1 = 0;
 
   var Dep = /*#__PURE__*/function () {
@@ -536,10 +537,11 @@
     }]);
 
     return Dep;
-  }(); // 静态属性
+  }(); // 静态属性 全局的就这一份
 
 
-  Dep.target = null;
+  Dep.target = null; // 提供出去的方法 将watcher 挂载到   Dep.target 属性上面
+
   function pushTarget(watcher) {
     Dep.target = watcher;
   }
@@ -736,7 +738,8 @@
      * 你看这很显然就是一个递归的操作，发现对象里面嵌套对象
      * 还是可以进一步的做响应式的处理
      */
-    observe(value);
+    observe(value); // 这个 defineReactive 每个属性都会执行, 在这里 创建一个dep
+
     var dep = new Dep();
     Object.defineProperty(data, key, {
       // 取值的时候创建一个dep
@@ -744,7 +747,7 @@
         // 渲染之前的时候先将watcher放在了dep.target上
         // 然后将dep.target 置空 这样 在模板下面取值时候就不会依赖收集
         if (Dep.target) {
-          dep.depend(); // 让dep
+          dep.depend(); // 让dep记住watcher 这个是比较核心的逻辑
         } // console.log(key)
 
 

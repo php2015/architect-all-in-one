@@ -1,9 +1,10 @@
 /**
- * 每个属性我都给它分配一个 dep dep可以存放watcher
+ * 每个属性我都给它分配一个dep dep可以存放watcher
  * 一个属性如果对应100个watcher (vuex中一个state可能在很多个页面中使用)
  * 同样的 watcher中可能存在多个属性, 因为每个属性都给他分配了一个dep 所以watcher中可能存在多个dep
  */
 
+// 为了保证dep的唯一性 也需要用一个id
 let id = 0
 class Dep {
   constructor() {
@@ -25,9 +26,10 @@ class Dep {
     this.subs.forEach((watcher) => watcher.update())
   }
 }
-// 静态属性
+// 静态属性 全局的就这一份
 Dep.target = null
 
+// 提供出去的方法 将watcher 挂载到   Dep.target 属性上面
 export function pushTarget(watcher) {
   Dep.target = watcher
 }

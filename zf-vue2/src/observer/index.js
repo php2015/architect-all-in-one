@@ -15,6 +15,7 @@ function defineReactive(data, key, value) {
    * 还是可以进一步的做响应式的处理
    */
   observe(value)
+  // 这个 defineReactive 每个属性都会执行, 在这里 创建一个dep
   let dep = new Dep()
   Object.defineProperty(data, key, {
     // 取值的时候创建一个dep
@@ -22,7 +23,7 @@ function defineReactive(data, key, value) {
       // 渲染之前的时候先将watcher放在了dep.target上
       // 然后将dep.target 置空 这样 在模板下面取值时候就不会依赖收集
       if (Dep.target) {
-        dep.depend(); // 让dep
+        dep.depend(); // 让dep记住watcher 这个是比较核心的逻辑
       }
       // console.log(key)
       return value
