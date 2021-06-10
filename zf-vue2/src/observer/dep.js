@@ -15,7 +15,8 @@ class Dep {
     // 走到这个函数的时候 dep.target 已经存在
     if (Dep.target) {
       // Dep.target 就是 watcher 这相当于
-      // watcher 上面有一个方法 addDep 把当前的 dep 存进watcher
+      // watcher 上面有一个方法 addDep 把当前的 dep存进 watcher
+      // 这里还有一个场景 一个页面中多次使用一个变量，不需要重复的渲染，只渲染一次就好
       Dep.target.addDep(this)
     }
   }

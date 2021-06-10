@@ -35,7 +35,7 @@ function defineReactive(data, key, value) {
       if(newV !== value) {
         observe(newV)
         value = newV
-        // 告诉当前的属性存放的watcher更新
+        // 告诉当前的属性存放的watcher执行
         dep.notify()
       }
     },

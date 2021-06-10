@@ -24,6 +24,12 @@
     })
     setTimeout(() => {
       vm.name = '褚鹏飞'
+      vm.name= '测试'
+      vm.name= '多次修改'
+      vm.name= '修改数据'
+      vm.$nextTick(()=>{
+        console.log(vm.$el);
+      },0)
     }, 1000);
   </script>
 </body>

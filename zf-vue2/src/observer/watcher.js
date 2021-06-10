@@ -1,4 +1,5 @@
 import { popTarget, pushTarget } from "./dep"
+import { queueWatcher } from "./scheduler"
 
 let id = 0
 
@@ -41,16 +42,30 @@ class Watcher {
     // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
     popTarget()
   }
-  update() { // vue 中的更新操作是异步的
-    this.get()
+  update() { 
+    // this.get()
+    // 对于多次修改属性的情况，我们只希望执行一次更新的操作，这种情况下
+    // 最好的就是对watcher做一个防抖的控制 限制它的更新频率
+    // 多次调用watcher 我希望缓存起来，等一下一起更新
+    // 所以说 vue中的更新操作是异步的
+    queueWatcher(this);
+  }
+  run() {
+    this.get();
   }
   addDep(dep) {
+    // 同一个属性在响应式的时候 有一个id属性
+    // 将这个id取出来
     let id = dep.id
+    // 这里使用的set去重
     if (!this.depsId.has(id)) {
       // id 不存在 就将这个dep id 放进去
       this.depsId.add(id)
+      // 然后将dep放进去  在页面中 可能使用多个属性 age name xxx
+      // 一个watcher 存放多个dep
       this.deps.push(dep)
-      // 同样的 需要在dep中存放watcher
+      // 同样的 需要在dep中存放watcher （其实这里并不是很明白 为什么要让dep记住watcher ）
+      // 想想 vuex中的例子就知道了 dep 记录所有的 watcher
       dep.addSub(this)
     }
   }

@@ -518,7 +518,8 @@
         // 走到这个函数的时候 dep.target 已经存在
         if (Dep.target) {
           // Dep.target 就是 watcher 这相当于
-          // watcher 上面有一个方法 addDep 把当前的 dep 存进watcher
+          // watcher 上面有一个方法 addDep 把当前的 dep存进 watcher
+          // 这里还有一个场景 一个页面中多次使用一个变量，不需要重复的渲染，只渲染一次就好
           Dep.target.addDep(this);
         }
       }
@@ -547,6 +548,103 @@
   }
   function popTarget() {
     Dep.target = null;
+  }
+
+  function proxy(vm, data, key) {
+    Object.defineProperty(vm, key, {
+      get: function get() {
+        return vm[data][key]; // vm._data.a
+      },
+      set: function set(newVal) {
+        // 触发set的时候，会得到这个值
+        vm[data][key] = newVal; // vm._data.a = 100;
+      }
+    });
+  }
+  function isObject(val) {
+    return _typeof(val) === "object" && val !== null;
+  } // 用一个全局的callbacks 接收用户传递进来的更新回调
+
+  var callbacks = [];
+  var waiting = false; // 用一个方法依次执行这些回调
+
+  function flushCallbacks() {
+    callbacks.forEach(function (cb) {
+      return cb();
+    });
+    waiting = false;
+  }
+
+  function timer(flushCallbacks) {
+    var timerFn = function timerFn() {};
+
+    if (Promise) {
+      timerFn = function timerFn() {
+        Promise.resolve().then(flushCallbacks);
+      };
+    } else if (MutationObserver) {
+      var textNode = document.createTextNode(1);
+      var observe = new MutationObserver(flushCallbacks);
+      observe.observe(textNode, {
+        characterData: true
+      });
+
+      timerFn = function timerFn() {
+        textNode.textContent = 3;
+      };
+    } else if (setImmediate) {
+      timerFn = function timerFn() {
+        setImmediate(flushCallbacks);
+      };
+    } else {
+      timerFn = function timerFn() {
+        setTimeout(flushCallbacks);
+      };
+    }
+
+    timerFn();
+  } // vue2中考虑了兼容性的问题 vue3中不再考虑兼容性问题
+
+
+  function nextTick(cb) {
+    callbacks.push(cb);
+
+    if (!waiting) {
+      setTimeout(function () {
+        timer(flushCallbacks);
+      }, 0);
+      waiting = true;
+    }
+  }
+
+  var queue = [];
+  var has = {}; // 列表维护存放了哪些watcher
+
+  function flushSchedulerQueue() {
+    for (var i = 0; i < queue.length; i++) {
+      queue[i].run();
+    }
+
+    queue = [];
+    has = {};
+    pending = true;
+  }
+
+  var pending = false; // 当前执行栈中，代码执行完毕后，会先清空微任务，再清空宏任务
+  // 希望尽早的执行一次更新操作
+
+  function queueWatcher(watcher) {
+    var id = watcher.id;
+
+    if (has[id] == null) {
+      queue.push(watcher);
+      has[id] = true; // 开启一次更新操作
+
+      if (!pending) {
+        nextTick(flushSchedulerQueue);
+        pending = true;
+      }
+    }
   }
 
   var id = 0;
@@ -596,18 +694,32 @@
     }, {
       key: "update",
       value: function update() {
-        // vue 中的更新操作是异步的
+        // this.get()
+        // 对于多次修改属性的情况，我们只希望执行一次更新的操作，这种情况下
+        // 最好的就是对watcher做一个防抖的控制 限制它的更新频率
+        // 多次调用watcher 我希望缓存起来，等一下一起更新
+        // 所以说 vue中的更新操作是异步的
+        queueWatcher(this);
+      }
+    }, {
+      key: "run",
+      value: function run() {
         this.get();
       }
     }, {
       key: "addDep",
       value: function addDep(dep) {
-        var id = dep.id;
+        // 同一个属性在响应式的时候 有一个id属性
+        // 将这个id取出来
+        var id = dep.id; // 这里使用的set去重
 
         if (!this.depsId.has(id)) {
           // id 不存在 就将这个dep id 放进去
-          this.depsId.add(id);
-          this.deps.push(dep); // 同样的 需要在dep中存放watcher
+          this.depsId.add(id); // 然后将dep放进去  在页面中 可能使用多个属性 age name xxx
+          // 一个watcher 存放多个dep
+
+          this.deps.push(dep); // 同样的 需要在dep中存放watcher （其实这里并不是很明白 为什么要让dep记住watcher ）
+          // 想想 vuex中的例子就知道了 dep 记录所有的 watcher
 
           dep.addSub(this);
         }
@@ -622,7 +734,10 @@
       // 这个方法既在初始化的时候调用，也会在更新的情况下调用
       var vm = this;
       vm.$el = patch(vm.$el, vnode);
-    };
+    }; // 用户自己调用的nextTick 也是这个方法
+
+
+    Vue.prototype.$nextTick = nextTick;
   }
   function mountComponent(vm, el) {
     // 更新函数 数据变化后，会再次调用这个函数
@@ -651,21 +766,6 @@
     new Watcher(vm, updateComponent, function () {
       console.log('我更新了');
     }, true);
-  }
-
-  function proxy(vm, data, key) {
-    Object.defineProperty(vm, key, {
-      get: function get() {
-        return vm[data][key]; // vm._data.a
-      },
-      set: function set(newVal) {
-        // 触发set的时候，会得到这个值
-        vm[data][key] = newVal; // vm._data.a = 100;
-      }
-    });
-  }
-  function isObject(val) {
-    return _typeof(val) === "object" && val !== null;
   }
 
   var oldArrayPrototype = Array.prototype;
@@ -759,7 +859,7 @@
          */
         if (newV !== value) {
           observe(newV);
-          value = newV; // 告诉当前的属性存放的watcher更新
+          value = newV; // 告诉当前的属性存放的watcher执行
 
           dep.notify();
         }
