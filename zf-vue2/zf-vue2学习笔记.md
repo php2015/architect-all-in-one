@@ -15,3 +15,19 @@ push shift pop unshift reverse sort splice 这7个方法属于变异方法，可
 在vue2中 用到了观察者模式 在这里 属性：被观察者  刷新页面: 观察者。
 
 Dep这个类的作用就是收集
+
+vue中的嵌套结构不能太深 否则会有大量递归
+
+vue中对象通过defineproperty 实现响应式 拦截了 get 和 set  如果不存在的属性不会拦截 可以使用 $set 让对象自己去notify 或者赋予一个新的对象。
+
+一个dep对应多个watcher是没有问题的，比如说一个name属性 既对应渲染watcher，又对应 用户自己写的watcher。
+
+
+计算属性默认不执行
+
+多次取值如果依赖的值不变化 就不会重新执行
+
+依赖的值变化，需要重新执行
+
+
+

@@ -651,27 +651,51 @@
 
   var Watcher = /*#__PURE__*/function () {
     /**
-     * @param {*} vm 
+     * @param {*} vm
      * @param {*} exprOrFn 表达式或者是个函数
-     * @param {*} cb 
-     * @param {*} options 
+     * @param {*} cb
+     * @param {*} options
      */
     function Watcher(vm, exprOrFn, cb, options) {
       _classCallCheck(this, Watcher);
 
-      this.vm = vm;
+      this.vm = vm; // 这里做过备注，在渲染watcher中, exprOrFn 就是那个updateComponent
+      // 对于用户自己写的watcher 这里可能是个 字符串 或者表达式 需要手动处理
+
       this.exprOrFn = exprOrFn;
+      this.user = !!options.user; // 标识是否是用户自己写的watcher
+
+      this.lazy = !!options.lazy; // 是否执行get的标志位
+
       this.cb = cb;
       this.options = options; // 每 new 一次 watcher 这个id 就会累加
 
-      this.id = id++;
-      this.getter = exprOrFn;
+      this.id = id++; // 这里需要对 exprOrFn 做一个判断
+
+      if (typeof exprOrFn == "string") {
+        // 将这个表达式转成一个函数 只要new Watcher的时候
+        this.getter = function () {
+          var path = exprOrFn.split("."); // [age,n] 分割成数组这种形式
+
+          var obj = vm; // 这里有点绕
+
+          for (var i = 0; i < path.length; i++) {
+            obj = obj[path[i]];
+          }
+
+          return obj;
+        };
+      } else {
+        this.getter = exprOrFn;
+      }
+
       this.deps = []; // 每一个属性对应的是一个dep 这个我其实有点理解不了
 
-      this.depsId = new Set(); // new Watcher 的时候就会执行这个get方法 
+      this.depsId = new Set(); // new Watcher 的时候就会执行这个get方法
       // 而这个get方法执行实际上就是我们传递进来 updateComponent 函数 执行
+      // 在用户自定义的watcher中 第一次调用get 方法就能拿到返回值
 
-      this.get();
+      this.value = this.lazy ? undefined : this.get();
     } // 默认应该让exprOrFn执行 就是updateComponent这个方法 render 去vm上取值 每次取的都是新的值
 
 
@@ -687,9 +711,10 @@
         // 当这个state变化了，是需要通知多个watcher一起更新的
         // 走到这个函数的时候 会从vm上取值，因为data上的属性已经被响应式了 会触发get方法
 
-        this.getter(); // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
+        var value = this.getter(); // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
 
         popTarget();
+        return value;
       }
     }, {
       key: "update",
@@ -704,7 +729,13 @@
     }, {
       key: "run",
       value: function run() {
-        this.get();
+        var newValue = this.get();
+        var oldValue = this.value;
+        this.value = newValue; // 为了保证下一次的更新时，上一次的最新值是下一次的老值
+
+        if (this.user) {
+          this.cb.call(this.vm, newValue, oldValue);
+        }
       }
     }, {
       key: "addDep",
@@ -821,10 +852,24 @@
         // 为了拿到observe 实例上面的 observeArray 方法 
         // 先提前将 这个实例绑定到了数组上面
         inserted = ob.observeArray(inserted); // 给数组新增的值也要进行观测
-      }
+      } // 数组本身的watcher 更新
+
+
+      ob.dep.notify();
     };
   });
 
+  function dependArray(value) {
+    for (var i = 0; i < value.length; i++) {
+      // 这个 current 是数组中的数组 
+      var current = value[i];
+      current.__ob__ && current.__ob__.dep.depend();
+
+      if (Array.isArray(current)) {
+        dependArray(current);
+      }
+    }
+  }
   /**
    * vue2会对对象进行遍历，将每个属性 用defineProperty 重新定义 性能差
    * defineReactive 是一个包装 内部就是使用
@@ -833,12 +878,15 @@
    * @param {*} value
    */
 
+
   function defineReactive(data, key, value) {
     /**
      * 你看这很显然就是一个递归的操作，发现对象里面嵌套对象
      * 还是可以进一步的做响应式的处理
      */
-    observe(value); // 这个 defineReactive 每个属性都会执行, 在这里 创建一个dep
+    var childOb = observe(value); // 这个value值也可能是一个数组，defineProperty 本身是不涉及value的
+    // 这个value 是通过 defineReactive 这个函数传递进来的
+    // 这个 defineReactive 每个属性都会执行, 在这里 创建一个dep
 
     var dep = new Dep();
     Object.defineProperty(data, key, {
@@ -848,6 +896,14 @@
         // 然后将dep.target 置空 这样 在模板下面取值时候就不会依赖收集
         if (Dep.target) {
           dep.depend(); // 让dep记住watcher 这个是比较核心的逻辑
+
+          if (childOb) {
+            childOb.dep.depend(); // 对于数组中子元素还是数组的情况，还需要做依赖收集
+
+            if (Array.isArray(value)) {
+              dependArray(value);
+            }
+          }
         } // console.log(key)
 
 
@@ -865,23 +921,19 @@
         }
       }
     });
-  }
-  /**
-   * 对象没有类型 类有类型 使用类的话入参会在构造函数中被作为参数，接收到
-   *
-   */
-  // 如果我们给对象新增一个属性并不会触发视图更新，为了解决这个问题，我们可以给对象本身也增加一个dep  dep存watcher 如果
-  // 增加一个属性后，我们就手动触发watcher的更新 $set
+  } // 如果我们给对象新增一个属性并不会触发视图更新，为了解决这个问题，我们可以给（对象本身也增加一个dep  dep存watcher） 如果
+  // 增加一个属性后，我们就手动触发watcher的更新 这就是$set的实现原理。 
 
 
   var Observer = /*#__PURE__*/function () {
     function Observer(data) {
       _classCallCheck(this, Observer);
 
-      // 这里使用defineProperty 定义一个 __ob__ 属性
+      this.dep = new Dep(); // 这里使用defineProperty 定义一个 __ob__ 属性
       // object.defineProperty 方法会直接在一个对象上定义一个新属性。
       // 或者修改一个对象的现有属性，并返回此对象。判断一个对象是否被观测过，看它有没有 __ob__ 属性
       // 注意 使用这个方法定义的属性是不会被枚举的到，不可枚举的好处是不会造成死循环，这里写的真的很好
+
       Object.defineProperty(data, "__ob__", {
         enumerable: false,
         configurable: false,
@@ -957,11 +1009,11 @@
       return;
     } // 这里做一个判断，如果当前的这个数据已经被响应式了
     // 直接返回就好，不需要重复响应式，最初添加这个属性是在Observer 这个类中做的
-    // 所以被观测的属性，都具有 __ob__ 属性
+    // 所以被观测的属性，都具有 __ob__ 属性  这个属性的值 还记得是什么吗 是那个 observer 实例
 
 
     if (data.__ob__) {
-      return data;
+      return data.__ob__;
     } // 这里使用了一个类，之所以没有使用构造函数的原因是
     // 功能比较耦合,返回的是一个实例
 
@@ -969,6 +1021,24 @@
     return new Observer(data);
   }
 
+  function stateMixin(Vue) {
+    /**
+     *
+     * @param {*} key
+     * @param {*} handler
+     * @param {*} options 可以接收用户传参立即调用
+     */
+    Vue.prototype.$watch = function (key, handler) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      options.user = true; // 标识是用户自己写的watcher
+
+      /**
+       * 原型上的方法  this指向当前实例
+       */
+
+      new Watcher(this, key, handler, options);
+    };
+  }
   /**
    * 初始化数据处理函数 接收的参数是vm实例了
    * 因为很多组件的实例都是需要进行初始数据的
@@ -989,9 +1059,13 @@
       initData(vm);
     }
 
-    if (opts.computed) ;
+    if (opts.computed) {
+      initComputed(vm, opts.computed);
+    }
 
-    if (opts.watch) ;
+    if (opts.watch) {
+      initWatch(vm, opts.watch);
+    }
   }
   /**
    * 这个函数专门用来处理用户传递进来的data
@@ -1014,6 +1088,77 @@
 
 
     observe(data);
+  }
+  /**
+   *
+   * @param {*} vm
+   * @param {*} computed
+   */
+
+
+  function initComputed(vm, computed) {
+    for (var key in computed) {
+      // 首先传递参数的时候 也是以对象的形式传递进来的
+      // 用户定义的
+      var userDef = computed[key]; // 依赖的属性变化就是重新取值 get
+
+      var getter = typeof userDef === "function" ? userDef : userDef.get; // 每个计算属性本质就是watcher
+
+      /**
+       * computed 默认是不直接执行的 所以在options
+       * 选项中 lazy 设置为true 不要默认执行
+       */
+
+      new Watcher(vm, getter, function () {}, {
+        lazy: true
+      });
+      defineComputed(vm, key, userDef);
+    }
+  }
+
+  function defineComputed(vm, key, userDef) {
+    var sharedProperty = {};
+
+    if (typeof userDef === "function") {
+      sharedProperty.get = userDef;
+    } else {
+      sharedProperty.get = userDef.get;
+      sharedProperty.set = userDef.set;
+    }
+
+    Object.defineProperty(vm, key, sharedProperty);
+  }
+  /**
+   *
+   * @param {*} vm
+   * @param {*} watch
+   */
+
+
+  function initWatch(vm, watch) {
+    // watch 传入的是一个对象 这里需要循环一下，拿到每一个key
+    for (var key in watch) {
+      var handler = watch[key]; // 一个 属性可以接收多个回调函数，所以这里 handler 可能是个数组
+
+      if (Array.isArray(handler)) {
+        for (var i = 0; i < handler.length; i++) {
+          createWatcher(vm, key, handler[i]);
+        }
+      } else {
+        // 如果不是一个数组，那就是一个简单的函数
+        createWatcher(vm, key, handler);
+      }
+    }
+  }
+  /**
+   * 创建watcher
+   */
+
+
+  function createWatcher(vm, key, handler) {
+    // 用户可能直接使用 vm.$watch 这种形式调用。
+    // 我们需要在原型上定义 $watch 方法
+    return vm.$watch(key, handler);
   }
 
   /**
@@ -1154,6 +1299,7 @@
 
 
   initMixin(Vue);
+  stateMixin(Vue);
   renderMixin(Vue); // 存放的是 _render
 
   lifecycleMixin(Vue); // 存放的是 _update

@@ -9,7 +9,7 @@
 </head>
 
 <body>
-  <div id="app">{{name}}</div>
+  <div id="app">{{name}} {{fullName}}</div>
   <script src="./dist/vue.js"></script>
   <script>
     let vm = new Vue({
@@ -18,19 +18,46 @@
         return {
           name: '雪薇',
           showFlag: false,
-          arr: [1, 2, 3]
+          firstName: "louis",
+          lastName: "chu",
+          // arr: [[1, 2, 3]]
         }
+      },
+      computed:{
+        fullName() {
+          return this.firstName + this.lastName
+        }
+      },
+      watch: {
+        name(newVal, oldVal) {
+          console.log(newVal, oldVal)
+        },
+        age: [
+          function (newVal, oldVal) {
+            console.log(newVal);
+          },
+          function (newVal, oldVal) {
+            console.log(oldVal);
+          }
+        ]
       }
     })
+
+    // vm.$watch('name', (newVal, oldVal) => {
+
+    // })
     setTimeout(() => {
-      vm.name = '褚鹏飞'
-      vm.name= '测试'
-      vm.name= '多次修改'
-      vm.name= '修改数据'
-      vm.$nextTick(()=>{
-        console.log(vm.$el);
-      },0)
+      vm.firstName = '鹏飞'
     }, 1000);
+    // setTimeout(() => {
+    //   vm.name = '褚鹏飞'
+    //   vm.name= '测试'
+    //   vm.name= '多次修改'
+    //   vm.name= '修改数据'
+    //   vm.$nextTick(()=>{
+    //     console.log(vm.$el);
+    //   },0)
+    // }, 1000);
   </script>
 </body>
 

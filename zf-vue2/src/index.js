@@ -1,6 +1,7 @@
 import { initMixin } from "./init"
 import { lifecycleMixin } from "./lifecycle";
 import { renderMixin } from "./render";
+import { stateMixin } from "./state";
 
 /**
  * 这里是一个函数声明，只有在new的时候才会调用
@@ -20,6 +21,7 @@ function Vue(options) {
 // 并且是首先执行的，那么所有在mixin上挂载的所有原型
 // 方法都会预先定义执行，init 是在new 的时候执行的
 initMixin(Vue);
+stateMixin(Vue);
 renderMixin(Vue);  // 存放的是 _render
 lifecycleMixin(Vue); // 存放的是 _update
 

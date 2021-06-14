@@ -5,25 +5,46 @@ let id = 0
 
 class Watcher {
   /**
-   * @param {*} vm 
+   * @param {*} vm
    * @param {*} exprOrFn 表达式或者是个函数
-   * @param {*} cb 
-   * @param {*} options 
+   * @param {*} cb
+   * @param {*} options
    */
   constructor(vm, exprOrFn, cb, options) {
     this.vm = vm
+    // 这里做过备注，在渲染watcher中, exprOrFn 就是那个updateComponent
+    // 对于用户自己写的watcher 这里可能是个 字符串 或者表达式 需要手动处理
     this.exprOrFn = exprOrFn
+    this.user = !!options.user // 标识是否是用户自己写的watcher
+    this.lazy = !!options.lazy // 是否执行get的标志位
     this.cb = cb
     this.options = options
     // 每 new 一次 watcher 这个id 就会累加
     this.id = id++
-    this.getter = exprOrFn
+
+    // 这里需要对 exprOrFn 做一个判断
+    if (typeof exprOrFn == "string") {
+      // 将这个表达式转成一个函数 只要new Watcher的时候
+      this.getter = function () {
+        let path = exprOrFn.split(".") // [age,n] 分割成数组这种形式
+
+        let obj = vm
+        // 这里有点绕
+        for (let i = 0; i < path.length; i++) {
+          obj = obj[path[i]]
+        }
+        return obj
+      }
+    } else {
+      this.getter = exprOrFn
+    }
     this.deps = []
     // 每一个属性对应的是一个dep 这个我其实有点理解不了
     this.depsId = new Set()
-    // new Watcher 的时候就会执行这个get方法 
+    // new Watcher 的时候就会执行这个get方法
     // 而这个get方法执行实际上就是我们传递进来 updateComponent 函数 执行
-    this.get()
+    // 在用户自定义的watcher中 第一次调用get 方法就能拿到返回值
+    this.value = this.lazy?  undefined : this.get()
   }
   // 默认应该让exprOrFn执行 就是updateComponent这个方法 render 去vm上取值 每次取的都是新的值
   get() {
@@ -37,21 +58,30 @@ class Watcher {
     // 当这个state变化了，是需要通知多个watcher一起更新的
 
     // 走到这个函数的时候 会从vm上取值，因为data上的属性已经被响应式了 会触发get方法
-    this.getter()
+    const value = this.getter()
 
     // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
     popTarget()
+
+    return value
   }
-  update() { 
+  update() {
     // this.get()
     // 对于多次修改属性的情况，我们只希望执行一次更新的操作，这种情况下
     // 最好的就是对watcher做一个防抖的控制 限制它的更新频率
     // 多次调用watcher 我希望缓存起来，等一下一起更新
     // 所以说 vue中的更新操作是异步的
-    queueWatcher(this);
+    queueWatcher(this)
   }
   run() {
-    this.get();
+    let newValue = this.get()
+    let oldValue = this.value
+
+    this.value = newValue // 为了保证下一次的更新时，上一次的最新值是下一次的老值
+
+    if (this.user) {
+      this.cb.call(this.vm, newValue, oldValue)
+    }
   }
   addDep(dep) {
     // 同一个属性在响应式的时候 有一个id属性

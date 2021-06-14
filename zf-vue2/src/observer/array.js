@@ -43,5 +43,7 @@ methods.forEach((method) => {
       // 先提前将 这个实例绑定到了数组上面
       inserted = ob.observeArray(inserted); // 给数组新增的值也要进行观测
     }
+    // 数组本身的watcher 更新
+    ob.dep.notify();
   }
 })

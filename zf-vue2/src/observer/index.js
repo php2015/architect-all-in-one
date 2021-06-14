@@ -2,6 +2,20 @@ import { isObject } from "../utils"
 import { arrayMethods } from "./array"
 import Dep from "./dep"
 
+
+
+function dependArray(value) {
+  for(let i = 0;i< value.length;i++) {
+    // 这个 current 是数组中的数组 
+    let current = value[i];
+    current.__ob__ && current.__ob__.dep.depend();
+
+    if(Array.isArray(current)) {
+      dependArray(current)
+    }
+  }
+}
+
 /**
  * vue2会对对象进行遍历，将每个属性 用defineProperty 重新定义 性能差
  * defineReactive 是一个包装 内部就是使用
@@ -14,7 +28,9 @@ function defineReactive(data, key, value) {
    * 你看这很显然就是一个递归的操作，发现对象里面嵌套对象
    * 还是可以进一步的做响应式的处理
    */
-  observe(value)
+  let childOb =  observe(value)
+  // 这个value值也可能是一个数组，defineProperty 本身是不涉及value的
+  // 这个value 是通过 defineReactive 这个函数传递进来的
   // 这个 defineReactive 每个属性都会执行, 在这里 创建一个dep
   let dep = new Dep()
   Object.defineProperty(data, key, {
@@ -24,6 +40,14 @@ function defineReactive(data, key, value) {
       // 然后将dep.target 置空 这样 在模板下面取值时候就不会依赖收集
       if (Dep.target) {
         dep.depend(); // 让dep记住watcher 这个是比较核心的逻辑
+        if (childOb) {
+          childOb.dep.depend();
+
+          // 对于数组中子元素还是数组的情况，还需要做依赖收集
+          if (Array.isArray(value)) {
+            dependArray(value)
+          }
+        }
       }
       // console.log(key)
       return value
@@ -41,14 +65,14 @@ function defineReactive(data, key, value) {
     },
   })
 }
-/**
- * 对象没有类型 类有类型 使用类的话入参会在构造函数中被作为参数，接收到
- *
- */
-// 如果我们给对象新增一个属性并不会触发视图更新，为了解决这个问题，我们可以给对象本身也增加一个dep  dep存watcher 如果
-// 增加一个属性后，我们就手动触发watcher的更新 $set
+
+// 如果我们给对象新增一个属性并不会触发视图更新，为了解决这个问题，我们可以给（对象本身也增加一个dep  dep存watcher） 如果
+// 增加一个属性后，我们就手动触发watcher的更新 这就是$set的实现原理。 
 class Observer {
   constructor(data) {
+
+    this.dep = new Dep();
+
     // 这里使用defineProperty 定义一个 __ob__ 属性
     // object.defineProperty 方法会直接在一个对象上定义一个新属性。
     // 或者修改一个对象的现有属性，并返回此对象。判断一个对象是否被观测过，看它有没有 __ob__ 属性
@@ -122,9 +146,9 @@ export function observe(data) {
 
   // 这里做一个判断，如果当前的这个数据已经被响应式了
   // 直接返回就好，不需要重复响应式，最初添加这个属性是在Observer 这个类中做的
-  // 所以被观测的属性，都具有 __ob__ 属性
+  // 所以被观测的属性，都具有 __ob__ 属性  这个属性的值 还记得是什么吗 是那个 observer 实例
   if (data.__ob__) {
-    return data
+    return data.__ob__;
   }
 
   // 这里使用了一个类，之所以没有使用构造函数的原因是
