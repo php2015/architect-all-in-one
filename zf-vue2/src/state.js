@@ -73,34 +73,75 @@ function initMethod() {}
  * @param {*} computed
  */
 function initComputed(vm, computed) {
+  // 我希望做一个关联，将key 和watcher做一个关联
+  // 在vm 上面放置一个属性_computedWatchers 和 watchers 用的是同一个对象
+  const watchers = (vm._computedWatchers = {})
+
+  // 为什么这里需要循环，因为计算属性很多，我需要创建多个watcher
+  // computed 有两种写法 我平时习惯使用第一中 那种get 个 set的 不经常使用
   for (let key in computed) {
     // 首先传递参数的时候 也是以对象的形式传递进来的
     // 用户定义的
     const userDef = computed[key]
 
-    // 依赖的属性变化就是重新取值 get
+    // 依赖的属性变化就是重新取值
+    // 这里做个简单的判断，如果是函数，那当前这个函数就是getter
+    // 如果是对象 对象的get 方法就是要的那个值
     let getter = typeof userDef === "function" ? userDef : userDef.get
 
-    // 每个计算属性本质就是watcher
     /**
+     * 感觉watcher 这个概念真的好难呀 有点理解不了
      * computed 默认是不直接执行的 所以在options
      * 选项中 lazy 设置为true 不要默认执行
+     * 将watcher 和属性做一个映射 相当于一个map
      */
-    new Watcher(vm, getter, () => {}, { lazy: true })
+    watchers[key] = new Watcher(vm, getter, () => {}, { lazy: true })
 
+    // 将key 定义在vm上
     defineComputed(vm, key, userDef)
   }
 }
 
+/**
+ * 首先这个函数存在的意义是什么呢
+ * 就是做一个缓存的功能，不要轻易触发getter方法
+ * 这就是一个高阶函数
+ */
+function createComputedGetter(key) {
+  // 取计算属性值的时候 走的是这个函数
+  // 只要createComputedGetter 函数执行
+  return function computedGetter() {
+    // 这里的this 指的就是vm  this._computedWatchers 包含
+    // 所有的计算属性 通过key 可以拿到对应的watcher wather 中包含对应的watcher
+    let watcher = this._computedWatchers[key]
+
+    // 看这个watcher是不是脏的 根据这个属性判断是否可以重新执行
+    // 脏就是调用用户的getter 不脏就是不用调用用户的getter
+    if (watcher.dirty) {
+      watcher.evaluate()
+    }
+
+    return watcher.value
+  }
+}
+
+/**
+ *
+ * @param {*} vm
+ * @param {*} key
+ * @param {*} userDef
+ */
 function defineComputed(vm, key, userDef) {
   let sharedProperty = {}
 
   if (typeof userDef === "function") {
     sharedProperty.get = userDef
   } else {
-    sharedProperty.get = userDef.get
+    sharedProperty.get = createComputedGetter(key)
     sharedProperty.set = userDef.set
   }
+  // 本质上还是一个 Object.defineProperty
+  // 定义在vm 上的 属性key 传入的 get 和 set 做了处理
   Object.defineProperty(vm, key, sharedProperty)
 }
 

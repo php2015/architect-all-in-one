@@ -16,7 +16,9 @@ class Watcher {
     // 对于用户自己写的watcher 这里可能是个 字符串 或者表达式 需要手动处理
     this.exprOrFn = exprOrFn
     this.user = !!options.user // 标识是否是用户自己写的watcher
-    this.lazy = !!options.lazy // 是否执行get的标志位
+    this.lazy = !!options.lazy // 是否立即执行get的标志位
+    // 这个dirty默认是脏的, 很巧妙的使用了 lazy的初始值
+    this.dirty = options.lazy
     this.cb = cb
     this.options = options
     // 每 new 一次 watcher 这个id 就会累加
@@ -44,7 +46,7 @@ class Watcher {
     // new Watcher 的时候就会执行这个get方法
     // 而这个get方法执行实际上就是我们传递进来 updateComponent 函数 执行
     // 在用户自定义的watcher中 第一次调用get 方法就能拿到返回值
-    this.value = this.lazy?  undefined : this.get()
+    this.value = this.lazy ? undefined : this.get()
   }
   // 默认应该让exprOrFn执行 就是updateComponent这个方法 render 去vm上取值 每次取的都是新的值
   get() {
@@ -58,7 +60,7 @@ class Watcher {
     // 当这个state变化了，是需要通知多个watcher一起更新的
 
     // 走到这个函数的时候 会从vm上取值，因为data上的属性已经被响应式了 会触发get方法
-    const value = this.getter()
+    const value = this.getter.call(this.vm)
 
     // 如果用户在模板外面取值，我们是不需要依赖收集的，此时清空
     popTarget()
@@ -98,6 +100,10 @@ class Watcher {
       // 想想 vuex中的例子就知道了 dep 记录所有的 watcher
       dep.addSub(this)
     }
+  }
+  evaluate() {
+    this.dirty = false // 表示已经取过值了
+    this.value = this.get() // 这个就是用户的getter执行，把这个值返回
   }
 }
 

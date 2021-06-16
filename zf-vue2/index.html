@@ -9,55 +9,34 @@
 </head>
 
 <body>
-  <div id="app">{{name}} {{fullName}}</div>
+  <div id="app"></div>
   <script src="./dist/vue.js"></script>
   <script>
     let vm = new Vue({
       el: "#app",
       data() {
         return {
-          name: '雪薇',
-          showFlag: false,
-          firstName: "louis",
-          lastName: "chu",
-          // arr: [[1, 2, 3]]
+          firstName: "chu",
+          lastName: "louis",
         }
       },
-      computed:{
-        fullName() {
-          return this.firstName + this.lastName
-        }
-      },
-      watch: {
-        name(newVal, oldVal) {
-          console.log(newVal, oldVal)
-        },
-        age: [
-          function (newVal, oldVal) {
-            console.log(newVal);
+      computed: {
+        // 计算属性默认是不会执行的，本质上是一个 defineProperty.getter 那什么时候会执行呢？
+        // 在页面中 使用到这个计算属性的时候执行的
+        // computed 具有缓存的功能，页面中多次调用函数只走一次
+        fullName: {
+          get() {
+            console.log("计算属性执行了");
+            return this.firstName + this.lastName
           },
-          function (newVal, oldVal) {
-            console.log(oldVal);
+          set(newVal) {
+            console.log(newVal);
           }
-        ]
+        }
       }
     })
-
-    // vm.$watch('name', (newVal, oldVal) => {
-
-    // })
-    setTimeout(() => {
-      vm.firstName = '鹏飞'
-    }, 1000);
-    // setTimeout(() => {
-    //   vm.name = '褚鹏飞'
-    //   vm.name= '测试'
-    //   vm.name= '多次修改'
-    //   vm.name= '修改数据'
-    //   vm.$nextTick(()=>{
-    //     console.log(vm.$el);
-    //   },0)
-    // }, 1000);
+    console.log(vm.fullName);
+    console.log(vm.fullName);
   </script>
 </body>
 
