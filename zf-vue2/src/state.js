@@ -1,6 +1,7 @@
 import { observe } from "./observer/index.js"
 import { proxy } from "./utils"
 import Watcher from "./observer/watcher"
+import Dep from "./observer/dep.js"
 
 export function stateMixin(Vue) {
   /**
@@ -119,6 +120,13 @@ function createComputedGetter(key) {
     // 脏就是调用用户的getter 不脏就是不用调用用户的getter
     if (watcher.dirty) {
       watcher.evaluate()
+    }
+
+    // 如果当前在取完值之后 Dep.target还有值 需要继续向上收集
+    if(Dep.target) { // 当前的Dep.target
+      // 让当前的计算属性也记录watcher 
+      // 计算属性watcher 内部记录了两个dep firstname lastname 反向查找
+      watcher.depend();
     }
 
     return watcher.value

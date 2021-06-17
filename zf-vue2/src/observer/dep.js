@@ -30,13 +30,20 @@ class Dep {
 // 静态属性 全局的就这一份
 Dep.target = null
 
+let stack = [];
+
 // 提供出去的方法 将watcher 挂载到   Dep.target 属性上面
 export function pushTarget(watcher) {
   Dep.target = watcher
+  // 这种处理是为了解决，同一个dep（属性）记录多个watcher的过程。
+  stack.push(watcher)
 }
 
 export function popTarget() {
-  Dep.target = null
+  // 渲染一次将当前的watcher 从栈中弹出
+  // 继续赋值另一个watcher
+  stack.pop();
+  Dep.target = stack[stack.length-1]
 }
 
 export default Dep

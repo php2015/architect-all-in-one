@@ -29,5 +29,8 @@ vue中对象通过defineproperty 实现响应式 拦截了 get 和 set  如果�
 
 依赖的值变化，需要重新执行
 
+this.firstname he  this.lastname 收集的是计算属性watcher。 我们想要的效果是 更改计算属性中的值时候，
+重新触发渲染，这就需要一个watcher的层次感。
+
 
 

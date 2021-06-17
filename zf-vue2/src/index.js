@@ -1,3 +1,4 @@
+import { initGlobalApi } from "./global-api/index";
 import { initMixin } from "./init"
 import { lifecycleMixin } from "./lifecycle";
 import { renderMixin } from "./render";
@@ -24,6 +25,7 @@ initMixin(Vue);
 stateMixin(Vue);
 renderMixin(Vue);  // 存放的是 _render
 lifecycleMixin(Vue); // 存放的是 _update
+initGlobalApi(Vue); // 初始化全局api
 
 // 将vue导出
 export default Vue

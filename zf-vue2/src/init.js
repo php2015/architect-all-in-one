@@ -1,6 +1,7 @@
 import { complileToFunction } from "./compiler/index.js"
-import { mountComponent } from "./lifecycle.js"
+import { callHook, mountComponent } from "./lifecycle.js"
 import { initState } from "./state"
+import { mergeOptions } from "./utils.js"
 
 /**
  * 将构造函数作为参数传递进去，对构造函数进行扩展，
@@ -18,10 +19,18 @@ export function initMixin(Vue) {
     // 但是可以在函数中使用vm,这个就特别类似于 var that = this 那种写法
     const vm = this
     // 用户传递进来的options属性挂载到vm上面, 这时我们能够操作vm.$options
-    vm.$options = options
+    // 如果用户写了全局的mixin，这个时候需要将全局的mixin 和当前用户传递进来的options合并
+    vm.$options = mergeOptions(vm.constructor.options,options)
+
+    console.log(vm.$options)
+    // 数据还没有创建的时候 调用
+    callHook(vm,'beforeCreate')
     // 初始化状态 模板渲染的数据需要这个函数  不仅仅是有watch 还有computed props data 我们需要有一个统一的函数
     // 来处理这些参数。用户也是将不同的状态放在不同的对象下面进行维护
     initState(vm)
+    // 数据已经初始化完毕
+    callHook(vm,'created')
+
     // 数据初始化就这样结束了吗？ 当然没有 我们还需要将数据挂载到模板上面
     if (vm.$options.el) {
       // 将数据挂载到模板上

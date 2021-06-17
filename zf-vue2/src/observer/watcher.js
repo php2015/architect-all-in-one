@@ -73,7 +73,13 @@ class Watcher {
     // 最好的就是对watcher做一个防抖的控制 限制它的更新频率
     // 多次调用watcher 我希望缓存起来，等一下一起更新
     // 所以说 vue中的更新操作是异步的
-    queueWatcher(this)
+    // 这里还需要加条件、关于计算属性的相关
+    if (this.lazy) {
+      // 说明是计算属性的watcher
+      this.dirty = true // 重新标识为脏值
+    } else {
+      queueWatcher(this)
+    }
   }
   run() {
     let newValue = this.get()
@@ -104,6 +110,13 @@ class Watcher {
   evaluate() {
     this.dirty = false // 表示已经取过值了
     this.value = this.get() // 这个就是用户的getter执行，把这个值返回
+  }
+  depend() {
+    let i = this.deps.length
+    while (i--) {
+      // 让lastname 和 firstname 收集渲染watcher
+      this.deps[i].depend(); 
+    }
   }
 }
 

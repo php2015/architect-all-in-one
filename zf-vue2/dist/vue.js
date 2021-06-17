@@ -42,6 +42,55 @@
     return Constructor;
   }
 
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  }
+
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      if (enumerableOnly) symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      });
+      keys.push.apply(keys, symbols);
+    }
+
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i] != null ? arguments[i] : {};
+
+      if (i % 2) {
+        ownKeys(Object(source), true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys(Object(source)).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
+      }
+    }
+
+    return target;
+  }
+
   function _slicedToArray(arr, i) {
     return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
   }
@@ -96,6 +145,167 @@
 
   function _nonIterableRest() {
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+
+  function proxy(vm, data, key) {
+    Object.defineProperty(vm, key, {
+      get: function get() {
+        return vm[data][key]; // vm._data.a
+      },
+      set: function set(newVal) {
+        // 触发set的时候，会得到这个值
+        vm[data][key] = newVal; // vm._data.a = 100;
+      }
+    });
+  }
+  function isObject(val) {
+    return _typeof(val) === "object" && val !== null;
+  } // 用一个全局的callbacks 接收用户传递进来的更新回调
+
+  var callbacks = [];
+  var waiting = false; // 用一个方法依次执行这些回调
+
+  function flushCallbacks() {
+    callbacks.forEach(function (cb) {
+      return cb();
+    });
+    waiting = false;
+  }
+
+  function timer(flushCallbacks) {
+    var timerFn = function timerFn() {};
+
+    if (Promise) {
+      timerFn = function timerFn() {
+        Promise.resolve().then(flushCallbacks);
+      };
+    } else if (MutationObserver) {
+      var textNode = document.createTextNode(1);
+      var observe = new MutationObserver(flushCallbacks);
+      observe.observe(textNode, {
+        characterData: true
+      });
+
+      timerFn = function timerFn() {
+        textNode.textContent = 3;
+      };
+    } else if (setImmediate) {
+      timerFn = function timerFn() {
+        setImmediate(flushCallbacks);
+      };
+    } else {
+      timerFn = function timerFn() {
+        setTimeout(flushCallbacks);
+      };
+    }
+
+    timerFn();
+  } // vue2中考虑了兼容性的问题 vue3中不再考虑兼容性问题
+
+
+  function nextTick(cb) {
+    callbacks.push(cb);
+
+    if (!waiting) {
+      setTimeout(function () {
+        timer(flushCallbacks);
+      }, 0);
+      waiting = true;
+    }
+  }
+  var lifeCycleHooks = ["beforeCreate", "created", "beforeMount", "mounted" // ... 其他生命周期
+  ]; // 策略对象
+
+  var strategy = {};
+  /**
+   * 这个函数是策略函数
+   * @param {*} parentVal
+   * @param {*} childVal
+   */
+
+  /**
+   * 第一次： this.options:        {}              options: {beforeCreate: Fn}  =>  {beforeCreate: [fn]}
+   * 第二次： this.options: {beforeCreate: [fn]}   options: {beforeCreate: Fn}  =>  {beforeCreate: [fn,fn]}
+   */
+
+  function mergeHook(parentVal, childVal) {
+    if (childVal) {
+      // 如果儿子有值 
+      if (parentVal) {
+        // 父亲也有值
+        // 这里纠正一个误区,  
+        return parentVal.concat(childVal);
+      } else {
+        // 父亲没有 将儿子拼装成一个数组
+        return [childVal];
+      }
+    } else {
+      // 如果对应的属性 儿子没有只有父亲有 那直接返回父亲的
+      return parentVal;
+    }
+  }
+
+  lifeCycleHooks.forEach(function (hook) {
+    strategy[hook] = mergeHook;
+  });
+  /**
+   * 第一次： this.options:        {}              options: {beforeCreate: Fn}  =>  {beforeCreate: [fn]}
+   * 第二次： this.options: {beforeCreate: [fn]}   options: {beforeCreate: Fn}  =>  {beforeCreate: [fn,fn]}
+   */
+
+  function mergeOptions(parent, child) {
+    // 合并之后的结果
+    var options = {}; // 以父对象为准，循环遍历
+
+    for (var key in parent) {
+      mergeFileld(key);
+    } // 循环完毕 父亲之后 以儿子为基准 循环
+
+
+    for (var _key in child) {
+      // 如果父亲中也有这个key 不需要重复合并
+      if (parent.hasOwnProperty(_key)) {
+        // 继续下一个key的遍历
+        continue;
+      }
+
+      mergeFileld(_key);
+    }
+
+    function mergeFileld(key) {
+      var parentVal = parent[key];
+      var childVal = child[key];
+
+      if (strategy[key]) {
+        options[key] = strategy[key](parentVal, childVal);
+      } else {
+        // {a:1,data:{}} {data:{}} 类似于这种场景 我们需要判断
+        // 父亲key 对应的对象和 孩子key 对应的对象 如果都是对象
+        // 在大的option上面开辟一个key 合并这个两个
+        if (isObject(parentVal) && isObject(childVal)) {
+          options[key] = _objectSpread2(_objectSpread2({}, parentVal), childVal);
+        } else {
+          // 其中有一个为对象，或者两个都不为对象
+          options[key] = child[key] || parent[key];
+        }
+      }
+    }
+
+    return options;
+  }
+
+  function initGlobalApi(Vue) {
+    Vue.options = {}; // 用来存放全局的配置,每一个组件初始化的时候都会和options选项进行合并
+    // vue.component
+    // vue.filter
+    // vue.directive
+
+    Vue.mixin = function (options) {
+      // 将用户通过mixin 传递进来的选项和 全局的配置做合并
+      // 这里的this指的就是vue 后期可能是子组件
+      this.options = mergeOptions(this.options, options);
+      return this; // 方面链式调用
+    };
   }
 
   // _c 类似于react中的 createElement 
@@ -541,80 +751,19 @@
   }(); // 静态属性 全局的就这一份
 
 
-  Dep.target = null; // 提供出去的方法 将watcher 挂载到   Dep.target 属性上面
+  Dep.target = null;
+  var stack = []; // 提供出去的方法 将watcher 挂载到   Dep.target 属性上面
 
   function pushTarget(watcher) {
-    Dep.target = watcher;
+    Dep.target = watcher; // 这种处理是为了解决，同一个dep（属性）记录多个watcher的过程。
+
+    stack.push(watcher);
   }
   function popTarget() {
-    Dep.target = null;
-  }
-
-  function proxy(vm, data, key) {
-    Object.defineProperty(vm, key, {
-      get: function get() {
-        return vm[data][key]; // vm._data.a
-      },
-      set: function set(newVal) {
-        // 触发set的时候，会得到这个值
-        vm[data][key] = newVal; // vm._data.a = 100;
-      }
-    });
-  }
-  function isObject(val) {
-    return _typeof(val) === "object" && val !== null;
-  } // 用一个全局的callbacks 接收用户传递进来的更新回调
-
-  var callbacks = [];
-  var waiting = false; // 用一个方法依次执行这些回调
-
-  function flushCallbacks() {
-    callbacks.forEach(function (cb) {
-      return cb();
-    });
-    waiting = false;
-  }
-
-  function timer(flushCallbacks) {
-    var timerFn = function timerFn() {};
-
-    if (Promise) {
-      timerFn = function timerFn() {
-        Promise.resolve().then(flushCallbacks);
-      };
-    } else if (MutationObserver) {
-      var textNode = document.createTextNode(1);
-      var observe = new MutationObserver(flushCallbacks);
-      observe.observe(textNode, {
-        characterData: true
-      });
-
-      timerFn = function timerFn() {
-        textNode.textContent = 3;
-      };
-    } else if (setImmediate) {
-      timerFn = function timerFn() {
-        setImmediate(flushCallbacks);
-      };
-    } else {
-      timerFn = function timerFn() {
-        setTimeout(flushCallbacks);
-      };
-    }
-
-    timerFn();
-  } // vue2中考虑了兼容性的问题 vue3中不再考虑兼容性问题
-
-
-  function nextTick(cb) {
-    callbacks.push(cb);
-
-    if (!waiting) {
-      setTimeout(function () {
-        timer(flushCallbacks);
-      }, 0);
-      waiting = true;
-    }
+    // 渲染一次将当前的watcher 从栈中弹出
+    // 继续赋值另一个watcher
+    stack.pop();
+    Dep.target = stack[stack.length - 1];
   }
 
   var queue = [];
@@ -726,7 +875,13 @@
         // 最好的就是对watcher做一个防抖的控制 限制它的更新频率
         // 多次调用watcher 我希望缓存起来，等一下一起更新
         // 所以说 vue中的更新操作是异步的
-        queueWatcher(this);
+        // 这里还需要加条件、关于计算属性的相关
+        if (this.lazy) {
+          // 说明是计算属性的watcher
+          this.dirty = true; // 重新标识为脏值
+        } else {
+          queueWatcher(this);
+        }
       }
     }, {
       key: "run",
@@ -764,6 +919,16 @@
 
         this.value = this.get(); // 这个就是用户的getter执行，把这个值返回
       }
+    }, {
+      key: "depend",
+      value: function depend() {
+        var i = this.deps.length;
+
+        while (i--) {
+          // 让lastname 和 firstname 收集渲染watcher
+          this.deps[i].depend();
+        }
+      }
     }]);
 
     return Watcher;
@@ -783,7 +948,7 @@
     // 更新函数 数据变化后，会再次调用这个函数
     var updateComponent = function updateComponent() {
       // 在这个函数的内部核心只做了两件事情:
-      //    1、调用render方法生成虚拟dom 
+      //    1、调用render方法生成虚拟dom
       //    2、使用render方法渲染真实的dom
       // 后续更新可以调用 updateComponent 这个方法
       // 这里有一个细节需要注意, 在调用render的时候，会从vm上取值，必然触发 vm 上属性的get操作
@@ -791,10 +956,10 @@
     }; // 第一次渲染的时候先调用一次
     // vue中视图更新是通过观察者模式实现的
     // 属性:  被观察者  观察者:刷新页面
-    // 第一个参数是vm: 当前的实例 
+    // 第一个参数是vm: 当前的实例
     // 第二个参数是更新方法，也就是 updateComponent 这个方法
     // 第三个参数是回调函数,就是更新完毕之后，需要执行的函数
-    // 第四个参数 是一个标识，代表的是渲染watcher 
+    // 第四个参数 是一个标识，代表的是渲染watcher
 
     /**
      * true 渲染watcher 说明还有其他 watcher
@@ -804,8 +969,22 @@
 
 
     new Watcher(vm, updateComponent, function () {
-      console.log('我更新了');
+      console.log("我更新了");
     }, true);
+  }
+  /**
+   * 当生命周期的钩子已经收集完毕之后
+   * 需要进行调用操作
+   */
+
+  function callHook(vm, hook) {
+    var handlers = vm.$options[hook];
+
+    if (handlers) {
+      for (var i = 0; i < handlers.length; i++) {
+        handlers[i].call(vm);
+      }
+    }
   }
 
   var oldArrayPrototype = Array.prototype;
@@ -1151,6 +1330,14 @@
 
       if (watcher.dirty) {
         watcher.evaluate();
+      } // 如果当前在取完值之后 Dep.target还有值 需要继续向上收集
+
+
+      if (Dep.target) {
+        // 当前的Dep.target
+        // 让当前的计算属性也记录watcher 
+        // 计算属性watcher 内部记录了两个dep firstname lastname 反向查找
+        watcher.depend();
       }
 
       return watcher.value;
@@ -1227,11 +1414,17 @@
       // 直接有一个函数声明，函数声明中的this就不好说是谁了。
       // 但是可以在函数中使用vm,这个就特别类似于 var that = this 那种写法
       var vm = this; // 用户传递进来的options属性挂载到vm上面, 这时我们能够操作vm.$options
+      // 如果用户写了全局的mixin，这个时候需要将全局的mixin 和当前用户传递进来的options合并
 
-      vm.$options = options; // 初始化状态 模板渲染的数据需要这个函数  不仅仅是有watch 还有computed props data 我们需要有一个统一的函数
+      vm.$options = mergeOptions(vm.constructor.options, options);
+      console.log(vm.$options); // 数据还没有创建的时候 调用
+
+      callHook(vm, 'beforeCreate'); // 初始化状态 模板渲染的数据需要这个函数  不仅仅是有watch 还有computed props data 我们需要有一个统一的函数
       // 来处理这些参数。用户也是将不同的状态放在不同的对象下面进行维护
 
-      initState(vm); // 数据初始化就这样结束了吗？ 当然没有 我们还需要将数据挂载到模板上面
+      initState(vm); // 数据已经初始化完毕
+
+      callHook(vm, 'created'); // 数据初始化就这样结束了吗？ 当然没有 我们还需要将数据挂载到模板上面
 
       if (vm.$options.el) {
         // 将数据挂载到模板上
@@ -1353,6 +1546,8 @@
   renderMixin(Vue); // 存放的是 _render
 
   lifecycleMixin(Vue); // 存放的是 _update
+
+  initGlobalApi(Vue); // 初始化全局api
 
   return Vue;
 
