@@ -12,23 +12,17 @@
   <div id="app"></div>
   <script src="./dist/vue.js"></script>
   <script>
-    Vue.mixin({
-      beforeCreate(){
-        console.log("before Created1");
-      }
-    })
+    Vue.component('my-button', {
+      template: `<button>hello</button>`
+    });
 
-    Vue.mixin({
-      beforeCreate(){
-        console.log("before Created2");
-      }
-    })
-
-    let vm = new Vue({
+    const vm = new Vue({
       el: "#app",
-      beforeCreate() {
-        console.log("before Created3");
-      },
+      components: {
+        'my-button': {
+          template: `<button>world</button>`
+        }
+      }
     })
   </script>
 </body>
