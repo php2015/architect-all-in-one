@@ -780,10 +780,16 @@
 
       var el = vnode.el = oldVnode.el; // 当前新的节点还没有渲染，先复用老节点
       // 如果两个虚拟节点是文本节点 比较文本内容。。。
-      // console.log(oldVnode.data)
+
+      if (vnode.tag == undefined) {
+        if (oldVnode.text !== vnode.text) {
+          el.textContent = vnode.text;
+        }
+      } // console.log(oldVnode.data)
       // console.log(vnode)
       // 生成新旧节点 如果标签一样，比较属性
       // 传入新的虚拟节点和老的属性，用新的属性更新老的
+
 
       patchProps(vnode, oldVnode.data); // 一方有儿子 一方没有儿子
 
