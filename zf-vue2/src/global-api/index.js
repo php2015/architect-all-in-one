@@ -18,12 +18,9 @@ export function initGlobalApi(Vue) {
 
   /**
    * 我们在自定义全局组件的时候，会使用这个api进行声明
-   *
    */
   Vue.component = function (id, definition) {
-    // 为了保证父子关系，我需要产生一个新的实例，
-    // 这样做的目的是使得组件能够隔离，每个组件都会产生一个新的类
-    // 去继承父类。
+    // 为了保证父子关系，我需要产生一个新的实例，这样做的目的是使得组件能够隔离，每个组件都会产生一个新的类, 去继承父类。
     definition = this.options._base.extend(definition)
     // 处理过之后 definition 就是一个类 这里做一个组件的映射表
     this.options.conponents[id] = definition
@@ -43,7 +40,7 @@ export function initGlobalApi(Vue) {
     }
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub // 原型继承
-    // 只和 vue的options合并
+    // 只和vue的options合并
     Sub.options = mergeOptions(Super.options, opts)
     return Sub
   }

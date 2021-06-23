@@ -9,22 +9,7 @@
 </head>
 
 <body>
-  <div id="app"></div>
   <script src="./dist/vue.js"></script>
-  <script>
-    Vue.component('my-button', {
-      template: `<button>hello</button>`
-    });
-
-    const vm = new Vue({
-      el: "#app",
-      components: {
-        'my-button': {
-          template: `<button>world</button>`
-        }
-      }
-    })
-  </script>
 </body>
 
 </html>

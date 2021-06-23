@@ -27,5 +27,19 @@ renderMixin(Vue);  // 存放的是 _render
 lifecycleMixin(Vue); // 存放的是 _update
 initGlobalApi(Vue); // 初始化全局api
 
+// 在这里 手动使用生成两个dom
+import { complileToFunction } from "./compiler/index.js";
+import {createEle} from "./vdom/patch.js"
+let oldTemplate = `<div>{{message}}</div>`
+let vm1 = new Vue({
+  data:{
+    message: 'hello world'
+  }
+})
+const render1 = complileToFunction(oldTemplate);
+const oldVnode = render1.call(vm1)
+// console.log(createEle(oldVnode))
+document.body.appendChild(createEle(oldVnode))
+
 // 将vue导出
 export default Vue

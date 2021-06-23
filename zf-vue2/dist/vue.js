@@ -248,10 +248,25 @@
   lifeCycleHooks.forEach(function (hook) {
     strategy[hook] = mergeHook;
   });
+
+  strategy.components = function (parentVal, childVal) {
+    // console.log(parentVal) // 这里打印的是 undefined
+    // 根据父对象构造一个新的对象
+    var options = Object.create(parentVal || {});
+
+    if (childVal) {
+      for (var key in childVal) {
+        options[key] = childVal[key];
+      }
+    }
+
+    return options;
+  };
   /**
    * 第一次： this.options:        {}              options: {beforeCreate: Fn}  =>  {beforeCreate: [fn]}
    * 第二次： this.options: {beforeCreate: [fn]}   options: {beforeCreate: Fn}  =>  {beforeCreate: [fn,fn]}
    */
+
 
   function mergeOptions(parent, child) {
     // 合并之后的结果
@@ -293,6 +308,18 @@
 
     return options;
   }
+  /**
+   * 
+   * @returns 
+   */
+
+  function isReservedTag(str) {
+    return function () {
+      var reservedTag = 'a,span,div,p,img,button,ul,li';
+      console.log(reservedTag.includes(str));
+      return reservedTag.includes(str);
+    };
+  }
 
   function initGlobalApi(Vue) {
     Vue.options = {}; // 用来存放全局的配置,每一个组件初始化的时候都会和options选项进行合并
@@ -312,13 +339,10 @@
     Vue.options.conponents = {};
     /**
      * 我们在自定义全局组件的时候，会使用这个api进行声明
-     *
      */
 
     Vue.component = function (id, definition) {
-      // 为了保证父子关系，我需要产生一个新的实例，
-      // 这样做的目的是使得组件能够隔离，每个组件都会产生一个新的类
-      // 去继承父类。
+      // 为了保证父子关系，我需要产生一个新的实例，这样做的目的是使得组件能够隔离，每个组件都会产生一个新的类, 去继承父类。
       definition = this.options._base.extend(definition); // 处理过之后 definition 就是一个类 这里做一个组件的映射表
 
       this.options.conponents[id] = definition;
@@ -340,7 +364,7 @@
 
       Sub.prototype = Object.create(Super.prototype);
       Sub.prototype.constructor = Sub; // 原型继承
-      // 只和 vue的options合并
+      // 只和vue的options合并
 
       Sub.options = mergeOptions(Super.options, opts);
       return Sub;
@@ -725,7 +749,6 @@
 
     return vnode.el;
   }
-
   function patch(oldVnode, vnode) {
     if (oldVnode.nodeType == 1) {
       // 说明是真实的元素
@@ -1455,8 +1478,8 @@
       var vm = this; // 用户传递进来的options属性挂载到vm上面, 这时我们能够操作vm.$options
       // 如果用户写了全局的mixin，这个时候需要将全局的mixin 和当前用户传递进来的options合并
 
-      vm.$options = mergeOptions(vm.constructor.options, options);
-      console.log(vm.$options); // 数据还没有创建的时候 调用
+      vm.$options = mergeOptions(vm.constructor.options, options); // console.log(vm.$options)
+      // 数据还没有创建的时候 调用
 
       callHook(vm, 'beforeCreate'); // 初始化状态 模板渲染的数据需要这个函数  不仅仅是有watch 还有computed props data 我们需要有一个统一的函数
       // 来处理这些参数。用户也是将不同的状态放在不同的对象下面进行维护
@@ -1507,15 +1530,20 @@
     };
   }
 
-  // 专门有一个包来处理虚拟节点
   function createElement(vm, tag) {
     var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-    for (var _len = arguments.length, children = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
-      children[_key - 3] = arguments[_key];
-    }
+    // 这里我们应该对于原生标签和 组件做一个区分，最简单的就是区分出原生标签
+    // 剩下的就是组件标签
+    if (isReservedTag(tag)) {
+      for (var _len = arguments.length, children = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
+        children[_key - 3] = arguments[_key];
+      }
 
-    return vnode(vm, tag, data, data.key, children, undefined);
+      return vnode(vm, tag, data, data.key, children, undefined);
+    } else {
+      console.log('组件的渲染');
+    }
   }
   function createTextElement(vm, text) {
     return vnode(vm, undefined, undefined, undefined, undefined, text);
@@ -1586,6 +1614,16 @@
   lifecycleMixin(Vue); // 存放的是 _update
 
   initGlobalApi(Vue); // 初始化全局api
+  var oldTemplate = "<div>{{message}}</div>";
+  var vm1 = new Vue({
+    data: {
+      message: 'hello world'
+    }
+  });
+  var render1 = complileToFunction(oldTemplate);
+  var oldVnode = render1.call(vm1); // console.log(createEle(oldVnode))
+
+  document.body.appendChild(createEle(oldVnode)); // 将vue导出
 
   return Vue;
 

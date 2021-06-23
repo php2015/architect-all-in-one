@@ -104,6 +104,18 @@ lifeCycleHooks.forEach((hook) => {
   strategy[hook] = mergeHook
 })
 
+strategy.components = function(parentVal, childVal) {
+  // console.log(parentVal) // 这里打印的是 undefined
+  // 根据父对象构造一个新的对象
+  let options = Object.create(parentVal||{});
+  if(childVal) {
+    for(let key in childVal) {
+      options[key] = childVal[key]
+    }
+  }
+  return options;
+}
+
 /**
  * 第一次： this.options:        {}              options: {beforeCreate: Fn}  =>  {beforeCreate: [fn]}
  * 第二次： this.options: {beforeCreate: [fn]}   options: {beforeCreate: Fn}  =>  {beforeCreate: [fn,fn]}
@@ -143,4 +155,16 @@ export function mergeOptions(parent, child) {
     }
   }
   return options
+}
+
+/**
+ * 
+ * @returns 
+ */
+export function isReservedTag(str) {
+  return function() {
+    let reservedTag = 'a,span,div,p,img,button,ul,li';
+    console.log(reservedTag.includes(str));
+    return reservedTag.includes(str);
+  }
 }

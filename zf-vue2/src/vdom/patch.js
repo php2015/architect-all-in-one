@@ -1,4 +1,4 @@
-function createEle(vnode) {
+export function createEle(vnode) {
   let { tag, children, key, data, text, vm } = vnode
   if (typeof tag === "string") {
     // 创建元素放在vnode.el 上
