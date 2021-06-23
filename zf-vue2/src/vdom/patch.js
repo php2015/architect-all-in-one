@@ -4,7 +4,7 @@ export function createEle(vnode) {
     // 创建元素放在vnode.el 上
     vnode.el = document.createElement(tag)
 
-    // 创建元素完毕之后, 给元素添加属性
+    // 创建元素完毕之后, 给元素添加属性 第一次渲染时候添加的属性
     patchProps(vnode)
 
     children.forEach((child) => {
@@ -51,17 +51,43 @@ export function patch(oldVnode, vnode) {
       // console.log(oldVnode.el.parentNode)
     }
 
+    let el = vnode.el = oldVnode.el // 当前新的节点还没有渲染，先复用老节点
     // 如果两个虚拟节点是文本节点 比较文本内容。。。
+    // console.log(oldVnode.data)
+    // console.log(vnode)
+    // 生成新旧节点 如果标签一样，比较属性
+    // 传入新的虚拟节点和老的属性，用新的属性更新老的
+    patchProps(vnode, oldVnode.data)
 
-    // 如果标签一样，比较属性
+    // 一方有儿子 一方没有儿子
+    let oldChildren = oldVnode.children || []
+    let newChildren = vnode.children || []
+
+    console.log(oldChildren)
+    console.log(newChildren)
+
+    if (oldChildren.length > 0 && newChildren.length > 0) {
+      // 双方都有儿子 这块逻辑是最复杂的
+    } else if (newChildren.length > 0) {
+      // 老的没有儿子 但是新的有儿子
+      // 循环创建子元素并渲染
+      for (let i = 0; i < newChildren.length; i++) {
+        let child = createEle(newChildren[i]) // child 是虚拟节点
+        el.appendChild(child)
+      }
+    } else if (oldChildren.length > 0) {
+      // 老的有儿子 新的没有儿子
+      el.innerHTML = `` // 直接删除所有儿子
+    }
   }
 }
 
 /**
- * 渲染属性 初次渲染的时候可以调用此方法
- * 后续更新也可以调用此方法
+ *
+ * @param {*} vnode 新的虚拟节点
+ * @param {*} oldProps 老的属性
  */
-function patchProps(vnode) {
+function patchProps(vnode, oldProps = {}) {
   let newProps = vnode.data || {}
   let el = vnode.el
   // console.log(JSON.stringify(newProps, null, 2))
@@ -73,6 +99,25 @@ function patchProps(vnode) {
       "a": "1"
     } 
   */
+  // 如果老的属性有，新的没有 ，例如老的节点中有一个 a=1 这个属性
+  // 新的节点中有一个 b=2 这个属性，就行该保留2 删除1 应该怎么做呢？
+  // 还有一种情况，style中属性数量不一样，一个多 一个少，这个怎么操作呢
+  let newStyle = newProps.style || {}
+  let oldStyle = oldProps.style || {}
+
+  for (let key in oldStyle) {
+    if (!newStyle[key]) {
+      el.style[key] = ""
+    }
+  }
+
+  for (let key in oldProps) {
+    // 循环老的属性
+    if (!newProps[key]) {
+      // 如果新的属性中不存在
+      el.removeAttribute(key) // 删除这个属性 这个时候 操作的其实是真实的dom
+    }
+  }
 
   // 这里属性有两种情况 一种是样式属性 style 一种是普通的属性
   for (let key in newProps) {
@@ -80,7 +125,7 @@ function patchProps(vnode) {
     if (key === "style") {
       // 对style 这个对象做循环
       for (let styleName in newProps.style) {
-        console.log(newProps.style[styleName])
+        // console.log(newProps.style[styleName])
         el.style[styleName] = newProps.style[styleName]
       }
     } else {

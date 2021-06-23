@@ -31,7 +31,7 @@ initGlobalApi(Vue) // 初始化全局api
 import { complileToFunction } from "./compiler/index.js"
 import { createEle, patch } from "./vdom/patch.js"
 
-let oldTemplate = `<div style="color:red" a="1">{{message}}</div>`
+let oldTemplate = `<div style="color:red;background:yellow" a="1"></div>`
 let vm1 = new Vue({
   data: {
     message: "hello world",
@@ -42,7 +42,7 @@ const oldVnode = render1.call(vm1)
 // console.log(createEle(oldVnode))
 document.body.appendChild(createEle(oldVnode))
 
-let newTemplate = `<div style="color:blue">{{message}}</div>`
+let newTemplate = `<div style="color:blue" b="2">{{message}}</div>`
 let vm2 = new Vue({
   data: {
     message: "vue",
@@ -55,7 +55,6 @@ const newVnode = render2.call(vm2)
 setTimeout(() => {
   patch(oldVnode, newVnode)
 }, 2000)
-
 
 // 将vue导出
 export default Vue

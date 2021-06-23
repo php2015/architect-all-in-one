@@ -737,7 +737,7 @@
 
     if (typeof tag === "string") {
       // 创建元素放在vnode.el 上
-      vnode.el = document.createElement(tag); // 创建元素完毕之后, 给元素添加属性
+      vnode.el = document.createElement(tag); // 创建元素完毕之后, 给元素添加属性 第一次渲染时候添加的属性
 
       patchProps(vnode);
       children.forEach(function (child) {
@@ -776,17 +776,44 @@
         // 我们之前在创建真实节点的时候, vnode.el = document.createElement(tag)
         // 因此能够找到现在真实dom元素
         return oldVnode.el.parentNode.replaceChild(createEle(vnode), oldVnode.el); // console.log(oldVnode.el.parentNode)
-      } // 如果两个虚拟节点是文本节点 比较文本内容。。。
-      // 如果标签一样，比较属性
+      }
 
+      var el = vnode.el = oldVnode.el; // 当前新的节点还没有渲染，先复用老节点
+      // 如果两个虚拟节点是文本节点 比较文本内容。。。
+      // console.log(oldVnode.data)
+      // console.log(vnode)
+      // 生成新旧节点 如果标签一样，比较属性
+      // 传入新的虚拟节点和老的属性，用新的属性更新老的
+
+      patchProps(vnode, oldVnode.data); // 一方有儿子 一方没有儿子
+
+      var oldChildren = oldVnode.children || [];
+      var newChildren = vnode.children || [];
+      console.log(oldChildren);
+      console.log(newChildren);
+
+      if (oldChildren.length > 0 && newChildren.length > 0) ; else if (newChildren.length > 0) {
+        // 老的没有儿子 但是新的有儿子
+        // 循环创建子元素并渲染
+        for (var i = 0; i < newChildren.length; i++) {
+          var child = createEle(newChildren[i]); // child 是虚拟节点
+
+          el.appendChild(child);
+        }
+      } else if (oldChildren.length > 0) {
+        // 老的有儿子 新的没有儿子
+        el.innerHTML = ""; // 直接删除所有儿子
+      }
     }
   }
   /**
-   * 渲染属性 初次渲染的时候可以调用此方法
-   * 后续更新也可以调用此方法
+   *
+   * @param {*} vnode 新的虚拟节点
+   * @param {*} oldProps 老的属性
    */
 
   function patchProps(vnode) {
+    var oldProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     var newProps = vnode.data || {};
     var el = vnode.el; // console.log(JSON.stringify(newProps, null, 2))
 
@@ -798,18 +825,38 @@
         "a": "1"
       } 
     */
-    // 这里属性有两种情况 一种是样式属性 style 一种是普通的属性
+    // 如果老的属性有，新的没有 ，例如老的节点中有一个 a=1 这个属性
+    // 新的节点中有一个 b=2 这个属性，就行该保留2 删除1 应该怎么做呢？
+    // 还有一种情况，style中属性数量不一样，一个多 一个少，这个怎么操作呢
 
-    for (var key in newProps) {
+    var newStyle = newProps.style || {};
+    var oldStyle = oldProps.style || {};
+
+    for (var key in oldStyle) {
+      if (!newStyle[key]) {
+        el.style[key] = "";
+      }
+    }
+
+    for (var _key in oldProps) {
+      // 循环老的属性
+      if (!newProps[_key]) {
+        // 如果新的属性中不存在
+        el.removeAttribute(_key); // 删除这个属性 这个时候 操作的其实是真实的dom
+      }
+    } // 这里属性有两种情况 一种是样式属性 style 一种是普通的属性
+
+
+    for (var _key2 in newProps) {
       // 需要针对style单独做样式处理
-      if (key === "style") {
+      if (_key2 === "style") {
         // 对style 这个对象做循环
         for (var styleName in newProps.style) {
-          console.log(newProps.style[styleName]);
+          // console.log(newProps.style[styleName])
           el.style[styleName] = newProps.style[styleName];
         }
       } else {
-        el.setAttribute(key, newProps[key]);
+        el.setAttribute(_key2, newProps[_key2]);
       }
     }
   }
@@ -1660,7 +1707,7 @@
   lifecycleMixin(Vue); // 存放的是 _update
 
   initGlobalApi(Vue); // 初始化全局api
-  var oldTemplate = "<div style=\"color:red\" a=\"1\">{{message}}</div>";
+  var oldTemplate = "<div style=\"color:red;background:yellow\" a=\"1\"></div>";
   var vm1 = new Vue({
     data: {
       message: "hello world"
@@ -1670,7 +1717,7 @@
   var oldVnode = render1.call(vm1); // console.log(createEle(oldVnode))
 
   document.body.appendChild(createEle(oldVnode));
-  var newTemplate = "<div style=\"color:blue\">{{message}}</div>";
+  var newTemplate = "<div style=\"color:blue\" b=\"2\">{{message}}</div>";
   var vm2 = new Vue({
     data: {
       message: "vue"
