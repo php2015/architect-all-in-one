@@ -785,6 +785,8 @@
         if (oldVnode.text !== vnode.text) {
           el.textContent = vnode.text;
         }
+
+        return;
       } // console.log(oldVnode.data)
       // console.log(vnode)
       // 生成新旧节点 如果标签一样，比较属性
@@ -794,9 +796,8 @@
       patchProps(vnode, oldVnode.data); // 一方有儿子 一方没有儿子
 
       var oldChildren = oldVnode.children || [];
-      var newChildren = vnode.children || [];
-      console.log(oldChildren);
-      console.log(newChildren);
+      var newChildren = vnode.children || []; // console.log(oldChildren)
+      // console.log(newChildren)
 
       if (oldChildren.length > 0 && newChildren.length > 0) ; else if (newChildren.length > 0) {
         // 老的没有儿子 但是新的有儿子
@@ -817,6 +818,7 @@
    * @param {*} vnode 新的虚拟节点
    * @param {*} oldProps 老的属性
    */
+
 
   function patchProps(vnode) {
     var oldProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};

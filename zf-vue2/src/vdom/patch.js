@@ -58,6 +58,7 @@ export function patch(oldVnode, vnode) {
       if (oldVnode.text !== vnode.text) {
         el.textContent = vnode.text
       }
+      return
     }
 
     // console.log(oldVnode.data)
@@ -70,11 +71,12 @@ export function patch(oldVnode, vnode) {
     let oldChildren = oldVnode.children || []
     let newChildren = vnode.children || []
 
-    console.log(oldChildren)
-    console.log(newChildren)
+    // console.log(oldChildren)
+    // console.log(newChildren)
 
     if (oldChildren.length > 0 && newChildren.length > 0) {
-      // 双方都有儿子 这块逻辑是最复杂的
+      // 双方都有儿子 这块逻辑是最复杂的 这里面使用了双指针的逻辑
+      patchChildren(el, oldChildren, newChildren)
     } else if (newChildren.length > 0) {
       // 老的没有儿子 但是新的有儿子
       // 循环创建子元素并渲染
@@ -87,6 +89,17 @@ export function patch(oldVnode, vnode) {
       el.innerHTML = `` // 直接删除所有儿子
     }
   }
+}
+
+
+/**
+ * 
+ * @param {*} el 当前元素
+ * @param {*} oldChildren  老的孩子
+ * @param {*} newChildren  新的孩子
+ */
+function patchChildren(el, oldChildren, newChildren){
+  // 因为内部使用的双指针的写法 我们需要设置4个指针
 }
 
 /**
