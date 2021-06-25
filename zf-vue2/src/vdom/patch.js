@@ -91,15 +91,29 @@ export function patch(oldVnode, vnode) {
   }
 }
 
-
 /**
- * 
+ *
  * @param {*} el 当前元素
  * @param {*} oldChildren  老的孩子
  * @param {*} newChildren  新的孩子
  */
-function patchChildren(el, oldChildren, newChildren){
+function patchChildren(el, oldChildren, newChildren) {
   // 因为内部使用的双指针的写法 我们需要设置4个指针
+  let oldStartIndex = 0
+  let oldStartVnode = oldChildren[0]
+  let oldEndIndex = oldChildren.length - 1
+  let oldEndVnode = oldChildren[oldEndIndex]
+
+  // 新的节点
+  let newStartIndex = 0
+  let newStartVnode = newChildren[0]
+  let newEndIndex = newChildren.length - 1
+  let newEndVnode = newChildren[newEndIndex]
+  // 使用双指针的算法 循环的条件是新和老的遍历还没有结束
+  // 表现在循环上条件上就是 指针还没有相遇
+  while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
+    
+  }
 }
 
 /**

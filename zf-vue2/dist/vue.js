@@ -799,7 +799,10 @@
       var newChildren = vnode.children || []; // console.log(oldChildren)
       // console.log(newChildren)
 
-      if (oldChildren.length > 0 && newChildren.length > 0) ; else if (newChildren.length > 0) {
+      if (oldChildren.length > 0 && newChildren.length > 0) {
+        // 双方都有儿子 这块逻辑是最复杂的 这里面使用了双指针的逻辑
+        patchChildren(el, oldChildren, newChildren);
+      } else if (newChildren.length > 0) {
         // 老的没有儿子 但是新的有儿子
         // 循环创建子元素并渲染
         for (var i = 0; i < newChildren.length; i++) {
@@ -812,6 +815,21 @@
         el.innerHTML = ""; // 直接删除所有儿子
       }
     }
+  }
+  /**
+   *
+   * @param {*} el 当前元素
+   * @param {*} oldChildren  老的孩子
+   * @param {*} newChildren  新的孩子
+   */
+
+  function patchChildren(el, oldChildren, newChildren) {
+    oldChildren[0];
+    var oldEndIndex = oldChildren.length - 1;
+    oldChildren[oldEndIndex]; // 新的节点
+    newChildren[0];
+    var newEndIndex = newChildren.length - 1;
+    newChildren[newEndIndex]; // 使用双指针的算法 循环的条件是新和老的遍历还没有结束
   }
   /**
    *
@@ -1715,7 +1733,7 @@
   lifecycleMixin(Vue); // 存放的是 _update
 
   initGlobalApi(Vue); // 初始化全局api
-  var oldTemplate = "<div style=\"color:red;background:yellow\" a=\"1\"></div>";
+  var oldTemplate = "<div style=\"color:red;background:yellow\">\n  <li>A</li>\n  <li>B</li>\n  <li>C</li>\n  <li>D</li>\n</div>";
   var vm1 = new Vue({
     data: {
       message: "hello world"
@@ -1725,7 +1743,7 @@
   var oldVnode = render1.call(vm1); // console.log(createEle(oldVnode))
 
   document.body.appendChild(createEle(oldVnode));
-  var newTemplate = "<div style=\"color:blue\" b=\"2\">{{message}}</div>";
+  var newTemplate = "<div style=\"color:blue\" b=\"2\">\n  <li>A</li>\n  <li>D</li>\n  <li>C</li>\n  <li>D</li>\n</div>";
   var vm2 = new Vue({
     data: {
       message: "vue"
