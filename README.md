@@ -1,2 +1,1 @@
-
 ## architect-all-in-one
