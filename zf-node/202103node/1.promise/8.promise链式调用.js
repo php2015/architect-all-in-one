@@ -49,10 +49,10 @@ promise2.then(data=>{
 //     console.log('fail')
 // })
 
-// fs.readFile('./a.txt','utf8',function (err,data) {
+// fs.readFile('./a.txt','utf8',function (err, data) {
+//   if(err) return console.log(err)
+//   fs.readFile('./b.txt','utf8',(err,data)=>{
 //     if(err) return console.log(err)
-//     fs.readFile('./b.txt','utf8',(err,data)=>{
-//         if(err) return console.log(err)
-//         console.log(data);
-//     })
+//     console.log(data);
+//   })
 // })

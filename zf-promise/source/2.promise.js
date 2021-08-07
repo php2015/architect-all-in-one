@@ -20,14 +20,14 @@ class Promise {
       if (this.state === PENDING) {
         this.state = FULFILLED
         this.value = value
-        this.onResolveCallbacks.forEach(fn=>fn())
+        this.onResolveCallbacks.forEach((fn) => fn())
       }
     }
     const reject = (reason) => {
       if (this.state === PENDING) {
         this.state = REJECTED
         this.reason = reason
-        this.onRejecteCallbacks.forEach(fn=>fn())
+        this.onRejecteCallbacks.forEach((fn) => fn())
       }
     }
     try {
