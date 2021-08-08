@@ -3,19 +3,23 @@ const HtmlWebpackPlugin = require("html-webpack-plugin")
 
 module.exports = {
   mode: "development",
-  devtool:"source-map",
   entry: {
     main: "./src/index.js",
   },
+  devtool: "source-map",
   output: {
-    filename: "[name].js",
     path: path.resolve(__dirname, "dist"),
+    filename: "[name].js",
+  },
+  devServer: {
+    port: 8083, // 指定HTTP 服务器的端口号
+    open: true, // 自动打开浏览器
   },
   module: {
     rules: [
       {
         test: /\.txt$/,
-        use: ["raw-loader"],
+        use: ["row-loader"],
       },
     ],
   },
