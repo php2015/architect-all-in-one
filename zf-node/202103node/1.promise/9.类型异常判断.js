@@ -12,7 +12,7 @@ promise2.then(data => {
     console.log(err)
 })
 
-// x.then
+// x.then 这种情况就是别人写的promise 当我们调取 promise then方法的时候 可能会有风险。
 let p = {}
 let index = 0;
 Object.defineProperty(p,'then',{

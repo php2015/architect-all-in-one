@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "",
   "bin": {
-    "process":"bin/index.js"
+    "zf-process-cli": "bin/index.js"
   },
   "main": "index.js",
   "scripts": {

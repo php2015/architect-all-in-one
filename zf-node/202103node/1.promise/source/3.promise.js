@@ -83,12 +83,7 @@ class Promise {
   then(onFulfilled, onRejected) {
     // onFulfilled, onRejected
     onFulfilled = typeof onFulfilled === "function" ? onFulfilled : (v) => v
-    onRejected =
-      typeof onRejected === "function"
-        ? onRejected
-        : (err) => {
-            throw err
-          }
+    onRejected = typeof onRejected === "function" ? onRejected : (err) => { throw err } 
     // 用于实现链式调用
     let promise2 = new Promise((resolve, reject) => {
       // 订阅模式
