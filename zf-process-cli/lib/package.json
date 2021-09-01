@@ -1,11 +1,8 @@
 {
-  "name": "zf-process-cli",
-  "version": "1.0.1",
+  "name": "lib",
+  "version": "1.0.0",
   "description": "",
-  "bin": {
-    "zf-process-cli": "bin/index.js"
-  },
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
