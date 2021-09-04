@@ -3,7 +3,7 @@ const fs = require('fs')
 class ReadStream extends EventEmitter{
     constructor(path, options = {}) {
         super();
-        // 放在实例上
+        // 我们将用户传递的属性放在实例上，目的是保证后续扩展的方法都能直接使用这个参数
         this.path = path;
         this.flags = options.flags || 'r';
         this.encoding = options.encoding || null;
