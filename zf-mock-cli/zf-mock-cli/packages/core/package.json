@@ -25,5 +25,7 @@
   },
   "bugs": {
     "url": "https://github.com/MagicalBridge/architect-all-in-one/issues"
+  },
+  "dependencies": {
   }
 }
