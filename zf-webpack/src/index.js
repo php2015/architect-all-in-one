@@ -1,4 +1,4 @@
-let title = require("./title")
+import name,{ age} from './title'
 
-console.log(title.default)
-console.log(title.age);
+console.log(name);
+console.log(age);
