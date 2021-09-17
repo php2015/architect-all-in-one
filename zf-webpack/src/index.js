@@ -1,4 +1,4 @@
-import name,{ age} from './title'
+import {title_name, age} from './title'
 
-console.log(name);
-console.log(age);
+console.log(title_name);
+console.log(age)

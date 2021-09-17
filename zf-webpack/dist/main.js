@@ -1,18 +1,10 @@
 ;(() => {
-  "use strict"
   var __webpack_modules__ = {
-    "./src/title.js": (
-      __unused_webpack_module,
-      __webpack_exports__,
-      __webpack_require__
-    ) => {
-      __webpack_require__.r(__webpack_exports__)
-      __webpack_require__.d(__webpack_exports__, {
-        default: () => __WEBPACK_DEFAULT_EXPORT__,
-        age: () => age,
-      })
-      const __WEBPACK_DEFAULT_EXPORT__ = "title_name"
-      const age = "title_age"
+    "./src/title.js": (module) => {
+      module.exports = {
+        title_name: "title_name",
+        age: "title_age",
+      }
     },
   }
   var __webpack_module_cache__ = {}
@@ -27,33 +19,50 @@
     __webpack_modules__[moduleId](module, module.exports, __webpack_require__)
     return module.exports
   }
-  __webpack_require__.d = (exports, definition) => {
-    for (var key in definition) {
-      if (
-        __webpack_require__.o(definition, key) &&
-        !__webpack_require__.o(exports, key)
-      ) {
-        Object.defineProperty(exports, key, {
-          enumerable: true,
-          get: definition[key],
-        })
+  ;(() => {
+    __webpack_require__.n = (module) => {
+      var getter =
+        module && module.__esModule ? () => module["default"] : () => module
+      __webpack_require__.d(getter, { a: getter })
+      return getter
+    }
+  })()
+  ;(() => {
+    __webpack_require__.d = (exports, definition) => {
+      for (var key in definition) {
+        if (
+          __webpack_require__.o(definition, key) &&
+          !__webpack_require__.o(exports, key)
+        ) {
+          Object.defineProperty(exports, key, {
+            enumerable: true,
+            get: definition[key],
+          })
+        }
       }
     }
-  }
-  __webpack_require__.o = (obj, prop) =>
-    Object.prototype.hasOwnProperty.call(obj, prop)
-  __webpack_require__.r = (exports) => {
-    if (typeof Symbol !== "undefined" && Symbol.toStringTag) {
-      Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" })
+  })()
+  ;(() => {
+    __webpack_require__.o = (obj, prop) =>
+      Object.prototype.hasOwnProperty.call(obj, prop)
+  })()
+  ;(() => {
+    __webpack_require__.r = (exports) => {
+      if (typeof Symbol !== "undefined" && Symbol.toStringTag) {
+        Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" })
+      }
+      Object.defineProperty(exports, "__esModule", { value: true })
     }
-    Object.defineProperty(exports, "__esModule", { value: true })
-  }
+  })()
   var __webpack_exports__ = {}
-  __webpack_require__.r(__webpack_exports__)
-  var _title__WEBPACK_IMPORTED_MODULE_0__ =
-    __webpack_require__("./src/title.js")
-  console.log(__webpack_exports__)
-  console.log(_title__WEBPACK_IMPORTED_MODULE_0__);
-  console.log(_title__WEBPACK_IMPORTED_MODULE_0__.default)
-  console.log(_title__WEBPACK_IMPORTED_MODULE_0__.age)
+  ;(() => {
+    "use strict"
+    __webpack_require__.r(__webpack_exports__)
+    var _title__WEBPACK_IMPORTED_MODULE_0__ =
+      __webpack_require__("./src/title.js")
+    var _title__WEBPACK_IMPORTED_MODULE_0___default =
+      /*#__PURE__*/ __webpack_require__.n(_title__WEBPACK_IMPORTED_MODULE_0__)
+    console.log(_title__WEBPACK_IMPORTED_MODULE_0__.title_name)
+    console.log(_title__WEBPACK_IMPORTED_MODULE_0__.age)
+  })()
 })()
