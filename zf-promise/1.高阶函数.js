@@ -13,6 +13,7 @@ function core(...args) {
 // 剩余运算符和扩展运算符的学习链接 https://www.cnblogs.com/strick/p/10172721.html
 Function.prototype.before = function (cb) {
   return (...args) => { // 这个函数就是newCore, ...args 是剩余运算符 传入的 a b 参数会被放入数组中
+    console.log(args)
     console.log(args[0]); // a
     console.log(args[1]); // b
     cb()
